@@ -7,6 +7,11 @@ on:
                 description: Custom label of the runner
                 required: true
                 type: string
+            runner-arch:
+                description: Architecture label of the runner
+                required: false
+                type: string
+                default: x64
             
             build-image:
                 description: Docker image used for building
@@ -25,7 +30,7 @@ permissions:
 jobs:
     build:
         name: Build and test
-        runs-on: [self-hosted, linux, x64, "${{ inputs.runner-label }}"]
+        runs-on: [self-hosted, linux, "${{ inputs.runner-arch }}", "${{ inputs.runner-label }}"]
         timeout-minutes: 30
 
         steps:
