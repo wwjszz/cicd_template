@@ -34,3 +34,19 @@ jobs:
               with:
                   fetch-depth: 0
                   persist-credentials: false
+
+            - name: Run build command
+              shell: bash
+              env:
+                  BUILD_IMAGE: ${{ inputs.build-image }}
+                  BUILD_COMMAND: ${{ inputs.build-command }}
+              run: |
+                  docker run --rm --init \
+                      --cpus 2 \
+                      --memory 4g \
+                      --mount "type=bind,src=$GITHUB_WORKSPACE,dst=$GITHUB_WORKSPACE" \
+                      --workdir "$GITHUB_WORKSPACE" \
+                      --env TZ=Asia/Shanghai \
+                      --entrypoint /bin/bash \
+                      "$BUILD_IMAGE" \
+                      -e -o pipefail -c "$BUILD_COMMAND"
