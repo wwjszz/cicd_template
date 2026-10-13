@@ -14,10 +14,13 @@ on:
                 type: string
             
             build-command:
-                description: Command executed inside 
+                description: Command executed inside the build container
                 required: true
                 type: string
-            
+        secrets:
+            CI_SSH_KEY:
+                description: SSH private key for checking out source
+                required: true
 
 permissions:
     contents: read
@@ -29,26 +32,12 @@ jobs:
         timeout-minutes: 30
 
         steps:
-            - name: Diagnose GitHub HTTPS
-              shell: bash
-              timeout-minutes: 2
-              working-directory: ${{ runner.temp }}
-              env:
-                  GIT_TERMINAL_PROMPT: "0"
-              run: |
-                  set +e
-
-                  timeout 30s git ls-remote https://github.com/actions/checkout.git HEAD
-                  echo "Default HTTPS exit code: $?"
-
-                  timeout 30s git -c http.version=HTTP/1.1 ls-remote https://github.com/actions/checkout.git HEAD
-                  echo "HTTP/1.1 exit code: $?"
-
             - name: Checkout source
               uses: actions/checkout@v4
               with:
                   fetch-depth: 0
                   persist-credentials: false
+                  ssh-key: ${{ secrets.CI_SSH_KEY }}
 
             - name: Run build command
               shell: bash
