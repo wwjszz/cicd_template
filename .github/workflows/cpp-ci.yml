@@ -50,7 +50,7 @@ jobs:
                   log-public-key: false
 
             - name: Build and test
-              uses: wwjszz/cicd_template/.github/actions@c6ae05d25fbfda8f76da878b7f4c9a7ba8708817
+              uses: wwjszz/cicd_template/.github/actions@5e27163219f7964794ef64d211bf58c7aa060629
               with:
                   build-type: ${{ inputs.build-type }}
                   run-tests: ${{ inputs.run-tests }}
