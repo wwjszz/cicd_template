@@ -35,9 +35,9 @@ printf '%s\n' \
 
 echo "Starting build container..."
 
+# --cpus 2 \
+# --memory 4g \
 docker run --rm --init \
-    # --cpus 2 \
-    # --memory 4g \
     --mount "type=bind,src=$GITHUB_WORKSPACE,dst=$GITHUB_WORKSPACE" \
     --mount "type=bind,src=$temp_dir/scripts,dst=/opt/ci,readonly" \
     --mount "type=bind,src=$SSH_AUTH_SOCK,dst=/run/ci-ssh-agent.sock,readonly" \
