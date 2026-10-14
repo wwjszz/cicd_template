@@ -5,7 +5,7 @@ set -euo pipefail
 : "${RUNNER_TEMP:?RUNNER_TEMP is required}"
 : "${SSH_AUTH_SOCK:?SSH_AUTH_SOCK is required}"
 : "${BUILD_TYPE:?BUILD_TYPE is required}"
-: "${RUN_TESTS:?RUN_TESTS is required}"
+: "${PHASE:?PHASE is required}"
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 build_image="localhost:5000/cxx_builder_devtoolset_8:1.3"
@@ -33,7 +33,7 @@ printf '%s\n' \
     'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' \
     > "$known_hosts"
 
-echo "Starting build container..."
+echo "Starting build container: phase=$PHASE"
 
 # --cpus 2 \
 # --memory 4g \
@@ -44,7 +44,7 @@ docker run --rm --init \
     --mount "type=bind,src=$known_hosts,dst=/run/ci-known-hosts,readonly" \
     --workdir "$GITHUB_WORKSPACE" \
     --env "BUILD_TYPE=$BUILD_TYPE" \
-    --env "RUN_TESTS=$RUN_TESTS" \
+    --env "PHASE=$PHASE" \
     --env TZ=Asia/Shanghai \
     --env SSH_AUTH_SOCK=/run/ci-ssh-agent.sock \
     --env GIT_TERMINAL_PROMPT=0 \
