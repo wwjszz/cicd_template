@@ -30,7 +30,7 @@ permissions:
 
 jobs:
     build:
-        name: Build and test
+        name: C++ CI
         runs-on: [self-hosted, linux, x64, "${{ inputs.runner-label }}"]
         timeout-minutes: 30
 
@@ -49,8 +49,21 @@ jobs:
                   ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}.sock
                   log-public-key: false
 
-            - name: Build and test
-              uses: wwjszz/cicd_template/.github/actions@5e27163219f7964794ef64d211bf58c7aa060629
+            - name: Prepare
+              uses: wwjszz/cicd_template/.github/actions@541f7bfdd83dbd012694b6697821ff692af95425 
               with:
+                  phase: prepare
                   build-type: ${{ inputs.build-type }}
-                  run-tests: ${{ inputs.run-tests }}
+
+            - name: Build
+              uses: wwjszz/cicd_template/.github/actions@541f7bfdd83dbd012694b6697821ff692af95425 
+              with:
+                  phase: build
+                  build-type: ${{ inputs.build-type }}
+
+            - name: Test
+              if: ${{ inputs.run-tests }}
+              uses: wwjszz/cicd_template/.github/actions@541f7bfdd83dbd012694b6697821ff692af95425 
+              with:
+                  phase: test
+                  build-type: ${{ inputs.build-type }}
