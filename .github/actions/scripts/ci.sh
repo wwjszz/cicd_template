@@ -6,7 +6,7 @@ set -eo pipefail
 : "${BUILD_TYPE:?BUILD_TYPE is required}"
 
 case "$PHASE" in
-    prepare|build|test)
+    prepare|build|test|coverage)
         ;;
     *)
         echo "Unsupported CI phase: $PHASE" >&2
@@ -22,6 +22,16 @@ case "$BUILD_TYPE" in
         exit 1
         ;;
 esac
+
+case "$COVERAGE" in
+    true|false)
+        ;;
+    *)
+        echo "COVERAGE must be true or false." >&2
+        exit 1
+        ;;
+esac
+
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 

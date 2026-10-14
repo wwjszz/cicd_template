@@ -6,6 +6,7 @@ set -euo pipefail
 : "${SSH_AUTH_SOCK:?SSH_AUTH_SOCK is required}"
 : "${BUILD_TYPE:?BUILD_TYPE is required}"
 : "${PHASE:?PHASE is required}"
+: "${COVERAGE:?COVERAGE is required}"
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 build_image="localhost:5000/cxx_builder_devtoolset_8:1.3"
@@ -44,6 +45,7 @@ docker run --rm --init \
     --mount "type=bind,src=$known_hosts,dst=/run/ci-known-hosts,readonly" \
     --workdir "$GITHUB_WORKSPACE" \
     --env "BUILD_TYPE=$BUILD_TYPE" \
+    --env "COVERAGE=$COVERAGE" \
     --env "PHASE=$PHASE" \
     --env TZ=Asia/Shanghai \
     --env SSH_AUTH_SOCK=/run/ci-ssh-agent.sock \
