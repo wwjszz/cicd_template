@@ -19,6 +19,12 @@ on:
                 required: false
                 type: boolean
                 default: true
+
+            coverage:
+                description: Generate coverage reports
+                required: false
+                type: boolean
+                default: false
             
         secrets:
             CI_SSH_KEY:
@@ -50,20 +56,33 @@ jobs:
                   log-public-key: false
 
             - name: Prepare
-              uses: wwjszz/cicd_template/.github/actions@541f7bfdd83dbd012694b6697821ff692af95425 
+              uses: wwjszz/cicd_template/.github/actions@69197544624592a50daedc9a1d316ad07d9780a2 
               with:
                   phase: prepare
-                  build-type: ${{ inputs.build-type }}
 
             - name: Build
-              uses: wwjszz/cicd_template/.github/actions@541f7bfdd83dbd012694b6697821ff692af95425 
+              uses: wwjszz/cicd_template/.github/actions@69197544624592a50daedc9a1d316ad07d9780a2 
               with:
                   phase: build
                   build-type: ${{ inputs.build-type }}
 
             - name: Test
-              if: ${{ inputs.run-tests }}
-              uses: wwjszz/cicd_template/.github/actions@541f7bfdd83dbd012694b6697821ff692af95425 
+              if: ${{ inputs.run-tests || inputs.coverage }}
+              uses: wwjszz/cicd_template/.github/actions@69197544624592a50daedc9a1d316ad07d9780a2 
               with:
                   phase: test
-                  build-type: ${{ inputs.build-type }}
+
+            - name: Coverage
+              if: ${{ inputs.coverage }}
+              uses: wwjszz/cicd_template/.github/actions@69197544624592a50daedc9a1d316ad07d9780a2
+              with:
+                phase: coverage
+
+            - name: Upload coverage report
+              if: ${{ inputs.coverage }}
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+              with:
+                  name: coverage-report
+                  path: build/test_coverage/
+                  if-no-files-found: error
+            
