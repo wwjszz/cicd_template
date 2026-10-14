@@ -7,16 +7,19 @@ on:
                 description: Custom label of the runner
                 required: true
                 type: string
-            
-            build-image:
-                description: Docker image used for building
-                required: true
+
+            build-type:
+                description: CMake build type
+                required: false
                 type: string
+                default: Release
+
+            run-tests:
+                description: Run unit tests after building
+                required: false
+                type: boolean
+                default: true
             
-            build-command:
-                description: Command executed inside the build container
-                required: true
-                type: string
         secrets:
             CI_SSH_KEY:
                 description: SSH private key for checking out source
@@ -38,38 +41,16 @@ jobs:
                   fetch-depth: 0
                   persist-credentials: false
                   ssh-key: ${{ secrets.CI_SSH_KEY }}
+
             - name: Start SSH agent
               uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
               with:
                   ssh-private-key: ${{ secrets.CI_SSH_KEY }}
                   ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}.sock
                   log-public-key: false
-            - name: Run build command
-              shell: bash
-              env:
-                  BUILD_IMAGE: ${{ inputs.build-image }}
-                  BUILD_COMMAND: ${{ inputs.build-command }}
-              run: |
-                  test -S "$SSH_AUTH_SOCK"
 
-                  known_hosts=$(mktemp "$RUNNER_TEMP/github-known-hosts.XXXXXX")
-                  trap 'rm -f -- "$known_hosts"' EXIT
-
-                  printf '%s\n' \
-                      'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' \
-                      > "$known_hosts"
-
-                  docker run --rm --init \
-                      --cpus 2 \
-                      --memory 4g \
-                      --mount "type=bind,src=$GITHUB_WORKSPACE,dst=$GITHUB_WORKSPACE" \
-                      --mount "type=bind,src=$SSH_AUTH_SOCK,dst=/run/ci-ssh-agent.sock,readonly" \
-                      --mount "type=bind,src=$known_hosts,dst=/run/ci-known-hosts,readonly" \
-                      --workdir "$GITHUB_WORKSPACE" \
-                      --env TZ=Asia/Shanghai \
-                      --env SSH_AUTH_SOCK=/run/ci-ssh-agent.sock \
-                      --env GIT_TERMINAL_PROMPT=0 \
-                      --env 'GIT_SSH_COMMAND=ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/ci-known-hosts -o ConnectTimeout=10' \
-                      --entrypoint /bin/bash \
-                      "$BUILD_IMAGE" \
-                      -e -o pipefail -c "$BUILD_COMMAND"
+            - name: Build and test
+              uses: wwjszz/cicd_template/.github/actions@c6ae05d25fbfda8f76da878b7f4c9a7ba8708817
+              with:
+                  build-type: ${{ inputs.build-type }}
+                  run-tests: ${{ inputs.run-tests }}
