@@ -1,0 +1,50 @@
+name: C++ Build and Test
+
+on:
+  workflow_call:
+    secrets:
+      CI_SSH_KEY:
+        description: SSH private key for source and private build dependencies
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Release build and test
+    runs-on: [self-hosted, linux, x64, wwj-cicd]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: true
+          persist-credentials: false
+          ssh-key: ${{ secrets.CI_SSH_KEY }}
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.CI_SSH_KEY }}
+          ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
+          log-public-key: false
+
+      - name: Prepare
+        uses: $/.github/actions
+        with:
+          phase: prepare
+
+      - name: Build Release
+        uses: $/.github/actions
+        with:
+          phase: build
+          build-type: Release
+          coverage: "false"
+
+      - name: Test
+        uses: $/.github/actions
+        with:
+          phase: test
