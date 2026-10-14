@@ -56,12 +56,12 @@ jobs:
                   log-public-key: false
 
             - name: Prepare
-              uses: wwjszz/cicd_template/.github/actions@69197544624592a50daedc9a1d316ad07d9780a2 
+              uses: $/.github/actions
               with:
                   phase: prepare
 
             - name: Build
-              uses: wwjszz/cicd_template/.github/actions@69197544624592a50daedc9a1d316ad07d9780a2 
+              uses: $/.github/actions
               with:
                   phase: build
                   build-type: ${{ inputs.build-type }}
@@ -69,13 +69,13 @@ jobs:
 
             - name: Test
               if: ${{ inputs.run-tests || inputs.coverage }}
-              uses: wwjszz/cicd_template/.github/actions@69197544624592a50daedc9a1d316ad07d9780a2 
+              uses: $/.github/actions
               with:
                   phase: test
 
             - name: Coverage
               if: ${{ inputs.coverage }}
-              uses: wwjszz/cicd_template/.github/actions@69197544624592a50daedc9a1d316ad07d9780a2
+              uses: $/.github/actions
               with:
                 phase: coverage
 
