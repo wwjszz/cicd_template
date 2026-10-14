@@ -1,0 +1,24 @@
+name: Build and test in company image
+description: Build and test a C++ project using the company toolchain
+
+inputs:
+  build-type:
+    description: CMake build type
+    required: false
+    default: "Release"
+
+  run-tests:
+    description: Run unit tests after building
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Run build container
+      shell: bash
+      env:
+        BUILD_TYPE: ${{ inputs.build-type }}
+        RUN_TESTS: ${{ inputs.run-tests }}
+        CI_ACTION_PATH: ${{ github.action_path }}
+      run: bash "$CI_ACTION_PATH/run.sh"
