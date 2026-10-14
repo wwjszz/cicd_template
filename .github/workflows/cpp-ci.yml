@@ -65,6 +65,7 @@ jobs:
               with:
                   phase: build
                   build-type: ${{ inputs.build-type }}
+                  coverage: ${{ inputs.coverage }}
 
             - name: Test
               if: ${{ inputs.run-tests || inputs.coverage }}
