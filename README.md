@@ -13,13 +13,30 @@ inside the organization's lab runner.
 The organization starter templates in wt-cicd-lab/.github generate these
 callers for repositories:
 
-- Other branch pushes call cpp-build.yml.
-- Default branch pushes call cpp-release.yml.
+Choose one pair of organization starter templates:
 
-Both callers use the test/wt-cicd-lab ref and explicitly pass CI_SSH_KEY.
-The release workflow checks that the event is a non-deletion push to the
-repository's default branch. Tag pushes do not start another release workflow.
-The default branch name is filled in by GitHub when creating the caller.
+- cpp-ci.yml: all branch pushes, including the default branch, call cpp-build.yml.
+- cpp-release-manual.yml: workflow_dispatch calls cpp-release.yml. Select the
+  default branch in Run workflow; no version input is needed.
+
+The earlier automatic-release pair is also available:
+
+- cpp-dev.yml: other branch pushes call cpp-build.yml.
+- cpp-release.yml: default branch pushes call cpp-release.yml.
+
+All callers use the test/wt-cicd-lab ref and explicitly pass CI_SSH_KEY.
+The release workflow accepts workflow_dispatch or a non-deletion push, and
+requires the selected ref to be the repository's default branch. Other branches,
+tag refs, and unrelated events skip the release jobs. Tag pushes do not start
+another build or release workflow. Both release entry points share the same
+concurrency group and reuse an existing version tag on the selected commit.
+
+Commit the manual caller to the default branch before using Run workflow.
+Installing it does not release anything automatically. When switching to the
+manual pair, remove or disable the old automatic-release caller; otherwise it
+will continue to release on default branch pushes. Replace the old development
+caller as well to avoid duplicate builds. For the automatic pair, GitHub fills
+in the default branch name when creating the caller.
 
 ## Runner and authentication
 
