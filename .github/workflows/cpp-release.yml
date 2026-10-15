@@ -1,0 +1,74 @@
+name: C++ Tag and Release
+
+on:
+  workflow_call:
+    secrets:
+      CI_SSH_KEY:
+        description: SSH private key for source and private build dependencies
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Tag build and package
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && !github.event.deleted }}
+    runs-on: [self-hosted, linux, x64, wwj-cicd]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout tagged source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          clean: true
+          persist-credentials: false
+          ssh-key: ${{ secrets.CI_SSH_KEY }}
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.CI_SSH_KEY }}
+          ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
+          log-public-key: false
+
+      - name: Prepare
+        uses: $/.github/actions
+        with:
+          phase: prepare
+          build-type: RelWithDebInfo
+          coverage: "false"
+
+      - name: Build with debug symbols
+        uses: $/.github/actions
+        with:
+          phase: build
+          build-type: RelWithDebInfo
+          coverage: "false"
+
+      - name: Test
+        uses: $/.github/actions
+        with:
+          phase: test
+          build-type: RelWithDebInfo
+          coverage: "false"
+
+      - name: Package
+        uses: $/.github/actions
+        with:
+          phase: package
+          build-type: RelWithDebInfo
+          coverage: "false"
+
+      - name: Persist build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tag-build-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            artifacts/build-output.tar.gz
+            artifacts/build-info.txt
+            artifacts/SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0

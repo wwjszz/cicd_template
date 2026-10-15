@@ -6,7 +6,7 @@ set -eo pipefail
 : "${BUILD_TYPE:?BUILD_TYPE is required}"
 
 case "$PHASE" in
-    prepare|build|test|coverage)
+    prepare|build|test|coverage|package)
         ;;
     *)
         echo "Unsupported CI phase: $PHASE" >&2
@@ -15,7 +15,7 @@ case "$PHASE" in
 esac
 
 case "$BUILD_TYPE" in
-    Debug|Release)
+    Debug|Release|RelWithDebInfo)
         ;;
     *)
         echo "Unsupported build type: $BUILD_TYPE" >&2

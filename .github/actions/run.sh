@@ -47,6 +47,9 @@ docker run --rm --init \
     --env "BUILD_TYPE=$BUILD_TYPE" \
     --env "COVERAGE=$COVERAGE" \
     --env "PHASE=$PHASE" \
+    --env "BUILD_IMAGE=$build_image" \
+    --env GITHUB_REF \
+    --env GITHUB_SHA \
     --env TZ=Asia/Shanghai \
     --env SSH_AUTH_SOCK=/run/ci-ssh-agent.sock \
     --env GIT_TERMINAL_PROMPT=0 \
