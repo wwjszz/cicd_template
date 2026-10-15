@@ -15,7 +15,7 @@ jobs:
     name: Generate version tag
     if: ${{ github.event_name == 'push' && github.ref_type == 'branch' && !github.event.deleted }}
     runs-on: [self-hosted, linux, x64, wwj-cicd]
-    timeout-minutes: 10
+    timeout-minutes: 30
 
     concurrency:
         group: auto-version-tag
