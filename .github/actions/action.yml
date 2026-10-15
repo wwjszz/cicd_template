@@ -3,7 +3,7 @@ description: Run one C++ CI phase using the company toolchains
 
 inputs:
   phase:
-    description: CI phase to run (prepare, build, test, coverage, package)
+    description: CI phase to run (prepare, build, test, coverage, tag, package)
     required: true
 
   build-type:

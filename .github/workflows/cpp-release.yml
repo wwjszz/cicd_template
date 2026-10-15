@@ -11,6 +11,40 @@ permissions:
   contents: read
 
 jobs:
+  tag:
+    name: Generate version tag
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && !github.event.deleted }}
+    runs-on: [self-hosted, linux, x64, wwj-cicd]
+    timeout-minutes: 10
+
+    steps:
+        - name: Checkout source
+          uses: actions/checkout@v4
+          with:
+            ref: ${{ github.sha }}
+            fetch-depth: 0
+            clean: true
+            persist-credentials: false
+            ssh-key: ${{ secrets.CI_SSH_KEY }}
+
+        - name: Start SSH agent
+          uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
+          with:
+            ssh-private-key: ${{ secrets.CI_SSH_KEY }}
+            ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
+            log-public-key: false
+
+        - name: Prepare
+          uses: $/.github/actions
+          with:
+                phase: prepare
+
+        - name: Generate and push version tag
+          uses: $/.github/actions
+          with:
+                phase: tag
+
+
   release:
     name: Tag build and package
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && !github.event.deleted }}

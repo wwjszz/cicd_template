@@ -6,7 +6,7 @@ set -eo pipefail
 : "${BUILD_TYPE:?BUILD_TYPE is required}"
 
 case "$PHASE" in
-    prepare|build|test|coverage|package)
+    prepare|build|test|coverage|package|tag)
         ;;
     *)
         echo "Unsupported CI phase: $PHASE" >&2
