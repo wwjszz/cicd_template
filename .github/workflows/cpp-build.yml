@@ -13,7 +13,9 @@ permissions:
 jobs:
   build:
     name: Release build and test
-    runs-on: [self-hosted, linux, x64, wt-cicd-lab]
+    runs-on:
+      group: lab-runners
+      labels: [self-hosted, linux, x64, wt-cicd-lab]
     timeout-minutes: 15
 
     steps:

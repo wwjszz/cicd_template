@@ -16,8 +16,9 @@ jobs:
       CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}
 ```
 
-The caller requires a self-hosted Linux/x64 runner carrying the wt-cicd-lab
-label. The lab runner image provides GCC/G++, Make, and CMake.
+The caller requires access to the organization runner group lab-runners.
+The template selects a self-hosted Linux/x64 runner in that group carrying
+the wt-cicd-lab label. The lab runner image provides GCC/G++, Make, and CMake.
 
 CI_SSH_KEY must contain an SSH private key whose public key is authorized to
 read the caller repository. Checkout uses SSH even for a public repository.
