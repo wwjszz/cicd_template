@@ -1,9 +1,9 @@
 name: Run C++ CI phase
-description: Run one C++ CI phase using the company toolchains
+description: Run one C++ CI phase directly in the lab runner
 
 inputs:
   phase:
-    description: CI phase to run (prepare, build, test, coverage, tag, package)
+    description: CI phase to run (prepare, build, test)
     required: true
 
   build-type:
@@ -19,7 +19,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Run build container
+    - name: Run CI phase
       shell: bash
       env:
         PHASE: ${{inputs.phase}}

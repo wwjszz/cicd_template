@@ -2,6 +2,10 @@ name: C++ Lab Build and Test
 
 on:
   workflow_call:
+    secrets:
+      CI_SSH_KEY:
+        description: SSH private key with read access to the caller repository
+        required: true
 
 permissions:
   contents: read
@@ -13,9 +17,21 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Check SSH configuration
+        shell: bash
+        env:
+          CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}
+        run: |
+          if [[ -z "$CI_SSH_KEY" ]]; then
+            echo "::error::CI_SSH_KEY is empty. Configure the secret and grant this repository access."
+            exit 1
+          fi
+
       - name: Checkout source
+        timeout-minutes: 3
         uses: actions/checkout@v4
         with:
+          ssh-key: ${{ secrets.CI_SSH_KEY }}
           clean: true
           persist-credentials: false
 

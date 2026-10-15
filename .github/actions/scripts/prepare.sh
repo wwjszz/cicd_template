@@ -6,4 +6,5 @@ if [[ ! -f ./CMakeLists.txt || ! -f ./build.sh || ! -x ./build.sh ]]; then
     exit 1
 fi
 cmake --version
+c++ --version
 echo "Project preparation completed."

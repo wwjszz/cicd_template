@@ -6,24 +6,35 @@ repository. The main branch and company-project integration remain separate.
 ## Supported entry point
 
 ```yaml
+permissions:
+  contents: read
+
 jobs:
   build:
     uses: wwjszz/cicd_template/.github/workflows/cpp-build.yml@test/wt-cicd-lab
+    secrets:
+      CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}
 ```
 
-The caller needs contents: read for its GITHUB_TOKEN and a self-hosted
-Linux/x64 runner carrying the wt-cicd-lab label. This dependency-free lab
-does not require CI_SSH_KEY.
+The caller requires a self-hosted Linux/x64 runner carrying the wt-cicd-lab
+label. The lab runner image provides GCC/G++, Make, and CMake.
+
+CI_SSH_KEY must contain an SSH private key whose public key is authorized to
+read the caller repository. Checkout uses SSH even for a public repository.
+The key is removed by checkout's cleanup; persist-credentials is disabled.
+Organization secrets must grant access to the caller repository. On GitHub
+Free, private repositories cannot access organization secrets; use a
+repository secret of the same name when testing private repositories.
 
 The existing layers are preserved:
 
 reusable workflow -> composite action.yml -> run.sh -> scripts/ci.sh
 -> prepare.sh / build.sh / test.sh
 
-- Prepare checks the project-owned build.sh and CMakeLists.txt.
-- Build runs ./build.sh -b -t Release in the fixed compiler image.
+- Prepare checks the project-owned build.sh and CMakeLists.txt and prints tool versions.
+- Build runs ./build.sh -b -t Release directly in the runner.
 - Test runs CTest and fails if there are no registered tests.
-- The image is localhost:5000/cxx_builder_devtoolset_8:1.3.
+- No separate compiler container is started.
 - No Docker CPU or memory limit is added.
 
 Only cpp-build.yml is adapted and enabled for this first lab.
