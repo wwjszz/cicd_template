@@ -6,7 +6,7 @@ set -euo pipefail
 : "${COVERAGE:?COVERAGE is required}"
 
 case "$PHASE" in
-    prepare|build|test) ;;
+    prepare|build|test|tag|package) ;;
     *) echo "Unsupported lab phase: $PHASE" >&2; exit 1 ;;
 esac
 case "$BUILD_TYPE" in

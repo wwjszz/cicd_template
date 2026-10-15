@@ -3,7 +3,6 @@ set -euo pipefail
 
 : "${BUILD_TYPE:?BUILD_TYPE is required}"
 : "${COVERAGE:?COVERAGE is required}"
-: "${BUILD_IMAGE:?BUILD_IMAGE is required}"
 : "${RELEASE_TAG:?RELEASE_TAG is required}"
 : "${GITHUB_SHA:?GITHUB_SHA is required}"
 
@@ -28,7 +27,7 @@ if ! grep -Fxq 'CMAKE_BUILD_TYPE:STRING=RelWithDebInfo' "$cache_file"; then
     exit 1
 fi
 
-if ! grep -Fxq 'RUN_COVERAGE:BOOL=OFF' "$cache_file"; then
+if grep -Eq '^RUN_COVERAGE:BOOL=(ON|TRUE|1)$' "$cache_file"; then
     echo "Coverage must be disabled for release packaging." >&2
     exit 1
 fi
@@ -49,7 +48,9 @@ tag=${RELEASE_TAG}
 commit=$commit_sha
 build_type=$BUILD_TYPE
 coverage=$COVERAGE
-build_image=$BUILD_IMAGE
+build_environment=lab-runner
+runner_name=${RUNNER_NAME:-local}
+compiler=$(c++ --version | head -n 1)
 EOF
 
 echo "Packaging tag $RELEASE_TAG..."
