@@ -50,6 +50,7 @@ docker run --rm --init \
     --env "BUILD_IMAGE=$build_image" \
     --env GITHUB_REF \
     --env GITHUB_SHA \
+    --env RELEASE_TAG \
     --env TZ=Asia/Shanghai \
     --env SSH_AUTH_SOCK=/run/ci-ssh-agent.sock \
     --env GIT_TERMINAL_PROMPT=0 \
