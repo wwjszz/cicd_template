@@ -32,24 +32,9 @@ jobs:
           ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
           log-public-key: false
 
-      - name: Prepare
-        uses: $/.github/actions
+      - name: Build and test with coverage instrumentation
+        uses: $/.github/actions/build-test
         with:
-          phase: prepare
-          build-type: Debug
-          coverage: "true"
-
-      - name: Build with coverage instrumentation
-        uses: $/.github/actions
-        with:
-          phase: build
-          build-type: Debug
-          coverage: "true"
-
-      - name: Test
-        uses: $/.github/actions
-        with:
-          phase: test
           build-type: Debug
           coverage: "true"
 

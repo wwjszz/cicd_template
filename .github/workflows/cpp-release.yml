@@ -42,22 +42,10 @@ jobs:
             ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
             log-public-key: false
 
-        - name: Prepare
-          uses: $/.github/actions
+        - name: Build and test Release
+          uses: $/.github/actions/build-test
           with:
-                phase: prepare
-
-        - name: Build Release
-          uses: $/.github/actions
-          with:
-            phase: build
             build-type: Release
-            coverage: "false"
-
-        - name: Test
-          uses: $/.github/actions
-          with:
-            phase: test
 
         - name: Generate and push version tag
           uses: $/.github/actions
@@ -107,24 +95,10 @@ jobs:
           ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
           log-public-key: false
 
-      - name: Prepare
-        uses: $/.github/actions
+      - name: Build and test RelWithDebInfo
+        uses: $/.github/actions/build-test
         with:
-          phase: prepare
-
-      - name: Compile RelWithDebInfo
-        uses: $/.github/actions
-        with:
-          phase: build
           build-type: RelWithDebInfo
-          coverage: "false"
-
-      - name: Test release build
-        uses: $/.github/actions
-        with:
-          phase: test
-          build-type: RelWithDebInfo
-          coverage: "false"
 
       - name: Package
         uses: $/.github/actions

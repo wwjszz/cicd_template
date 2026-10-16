@@ -55,23 +55,12 @@ jobs:
                   ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}.sock
                   log-public-key: false
 
-            - name: Prepare
-              uses: $/.github/actions
+            - name: ${{ (inputs.run-tests || inputs.coverage) && 'Build and test' || 'Build' }}
+              uses: $/.github/actions/build-test
               with:
-                  phase: prepare
-
-            - name: Build
-              uses: $/.github/actions
-              with:
-                  phase: build
-                  build-type: ${{ inputs.build-type }}
-                  coverage: ${{ inputs.coverage }}
-
-            - name: Test
-              if: ${{ inputs.run-tests || inputs.coverage }}
-              uses: $/.github/actions
-              with:
-                  phase: test
+                build-type: ${{ inputs.build-type }}
+                run-tests: ${{ inputs.run-tests }}
+                coverage: ${{ inputs.coverage }}
 
             - name: Coverage
               if: ${{ inputs.coverage }}
@@ -86,4 +75,3 @@ jobs:
                   name: coverage-report
                   path: build/test_coverage/
                   if-no-files-found: error
-            

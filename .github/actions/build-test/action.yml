@@ -1,0 +1,43 @@
+name: Build and test
+description: Prepare the project, build it and run tests using the company toolchain
+
+inputs:
+  build-type:
+    description: CMake build type
+    required: false
+    default: "Release"
+
+  coverage:
+    description: Enable coverage instrumentation and always run tests
+    required: false
+    default: "false"
+
+  run-tests:
+    description: Run unit tests after building
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare
+      uses: $/.github/actions
+      with:
+        phase: prepare
+        build-type: ${{ inputs.build-type }}
+        coverage: ${{ inputs.coverage }}
+
+    - name: Build
+      uses: $/.github/actions
+      with:
+        phase: build
+        build-type: ${{ inputs.build-type }}
+        coverage: ${{ inputs.coverage }}
+
+    - name: Test
+      if: ${{ inputs.run-tests == 'true' || inputs.coverage == 'true' }}
+      uses: $/.github/actions
+      with:
+        phase: test
+        build-type: ${{ inputs.build-type }}
+        coverage: ${{ inputs.coverage }}

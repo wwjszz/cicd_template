@@ -63,7 +63,18 @@ jobs:
 
 ## 项目构建约定
 
-模板复用 `.github/actions/action.yml` 和 `.github/actions/scripts/` 中的脚本：
+Prepare、Build、Test 统一通过 `.github/actions/build-test` 调用，例如：
+
+```yaml
+- name: Build and test
+  uses: $/.github/actions/build-test
+  with:
+    build-type: Release
+```
+
+默认运行测试；coverage 流程传入 `build-type: Debug` 和 `coverage: "true"`，发版构建传入 `build-type: RelWithDebInfo`。旧 `cpp-ci.yml` 的 `run-tests` 开关继续有效，开启 coverage 时始终运行测试。
+
+workflow 中显示一个构建步骤，展开日志查看 Prepare、Build、Test 各阶段。内部仍分别调用现有 phase action 和脚本：
 
 1. `prepare` 在构建容器内运行 `git_setup`，准备出可执行的项目 `./build.sh`。
 2. 普通构建运行 `./build.sh -b -t Release`；coverage 构建运行 `./build.sh -b -t Debug -C`，随后清零覆盖率计数。
