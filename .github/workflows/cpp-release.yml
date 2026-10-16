@@ -26,21 +26,11 @@ jobs:
       tag: ${{ steps.version.outputs.tag }}
 
     steps:
-        - name: Checkout source
-          uses: actions/checkout@v4
+        - name: Setup
+          uses: $/.github/actions/setup
           with:
-            ref: ${{ github.sha }}
-            fetch-depth: 0
-            clean: true
-            persist-credentials: false
             ssh-key: ${{ secrets.CI_SSH_KEY }}
-
-        - name: Start SSH agent
-          uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
-          with:
-            ssh-private-key: ${{ secrets.CI_SSH_KEY }}
-            ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
-            log-public-key: false
+            ref: ${{ github.sha }}
 
         - name: Build and test Release
           uses: $/.github/actions/build-test
@@ -71,14 +61,11 @@ jobs:
       RELEASE_TAG: ${{ needs.tag.outputs.tag }}
 
     steps:
-      - name: Checkout tagged source
-        uses: actions/checkout@v4
+      - name: Setup
+        uses: $/.github/actions/setup
         with:
-          ref: refs/tags/${{ needs.tag.outputs.tag}}
-          fetch-depth: 0
-          clean: true
-          persist-credentials: false
           ssh-key: ${{ secrets.CI_SSH_KEY }}
+          ref: refs/tags/${{ needs.tag.outputs.tag}}
 
       - name: Verify release source
         shell: bash
@@ -87,13 +74,6 @@ jobs:
             echo "Release tag does not match the triggering commit." >&2
             exit 1
           fi
-
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.CI_SSH_KEY }}
-          ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
-          log-public-key: false
 
       - name: Build and test RelWithDebInfo
         uses: $/.github/actions/build-test

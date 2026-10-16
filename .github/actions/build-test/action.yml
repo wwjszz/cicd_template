@@ -24,8 +24,6 @@ runs:
       uses: $/.github/actions
       with:
         phase: prepare
-        build-type: ${{ inputs.build-type }}
-        coverage: ${{ inputs.coverage }}
 
     - name: Build
       uses: $/.github/actions
@@ -39,5 +37,3 @@ runs:
       uses: $/.github/actions
       with:
         phase: test
-        build-type: ${{ inputs.build-type }}
-        coverage: ${{ inputs.coverage }}

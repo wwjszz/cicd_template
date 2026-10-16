@@ -2,9 +2,6 @@
 
 set -eo pipefail
 
-: "${PHASE:?PHASE is required}"
-: "${BUILD_TYPE:?BUILD_TYPE is required}"
-
 case "$PHASE" in
     prepare|build|test|coverage|package|tag)
         ;;
@@ -31,7 +28,6 @@ case "$COVERAGE" in
         exit 1
         ;;
 esac
-
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 

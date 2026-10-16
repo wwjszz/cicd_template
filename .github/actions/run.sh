@@ -4,9 +4,6 @@ set -euo pipefail
 : "${GITHUB_WORKSPACE:?GITHUB_WORKSPACE is required}"
 : "${RUNNER_TEMP:?RUNNER_TEMP is required}"
 : "${SSH_AUTH_SOCK:?SSH_AUTH_SOCK is required}"
-: "${BUILD_TYPE:?BUILD_TYPE is required}"
-: "${PHASE:?PHASE is required}"
-: "${COVERAGE:?COVERAGE is required}"
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 build_image="localhost:5000/cxx_builder_devtoolset_8:1.3"
@@ -36,8 +33,6 @@ printf '%s\n' \
 
 echo "Starting build container: phase=$PHASE"
 
-# --cpus 2 \
-# --memory 4g \
 docker run --rm --init \
     --mount "type=bind,src=$GITHUB_WORKSPACE,dst=$GITHUB_WORKSPACE" \
     --mount "type=bind,src=$temp_dir/scripts,dst=/opt/ci,readonly" \

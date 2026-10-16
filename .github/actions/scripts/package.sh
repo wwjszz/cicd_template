@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${BUILD_TYPE:?BUILD_TYPE is required}"
-: "${COVERAGE:?COVERAGE is required}"
 : "${BUILD_IMAGE:?BUILD_IMAGE is required}"
 : "${RELEASE_TAG:?RELEASE_TAG is required}"
 : "${GITHUB_SHA:?GITHUB_SHA is required}"
