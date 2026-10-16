@@ -26,5 +26,5 @@ runs:
       uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
       with:
         ssh-private-key: ${{ inputs.ssh-key }}
-        ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock
+        ssh-auth-sock: ${{ runner.temp }}/ssh-agent.sock
         log-public-key: false
