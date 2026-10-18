@@ -1,6 +1,6 @@
 {
-  "name": "C++ 打标与归档（仅 master）",
-  "description": "仅 master 分支 push 时构建、测试并自动打 tag，再构建 RelWithDebInfo、保存 Actions artifact，并创建 GitHub Release 和上传附件。",
+  "name": "C++ Tag and Release (master only)",
+  "description": "Build, test and create a tag on pushes to master, then build RelWithDebInfo, save Actions artifacts and publish a GitHub Release with assets.",
   "categories": [
     "C++"
   ]

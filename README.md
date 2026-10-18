@@ -5,6 +5,8 @@
 ```text
 仓库根目录/
 ├── README.md
+├── scripts/                 # 业务仓库 workflow 安装脚本
+├── tests/                   # 安装脚本的本地回归测试
 ├── workflow-templates/       # 业务仓库入口模板和展示信息
 ├── .github/workflows/       # 可复用工作流
 └── actions/                 # 公共 Action、容器入口和阶段脚本
@@ -13,7 +15,7 @@
 ## 部署到公司组织
 
 1. 将完整内容放入公司 `.github` 仓库的 `main` 分支；公司仓库已有其他文件时保留这些文件。
-2. 将三个 `workflow-templates/*.yml` 和本 README 示例中的 `COMPANY_ORG` 替换为实际公司组织名。它是交付占位符，GitHub 不会自动替换。
+2. 按下方说明通过脚本接入业务仓库，脚本自动填写公共仓库名称。若使用 GitHub 页面或手动复制接入，需要将三个 `workflow-templates/*.yml` 中的 `COMPANY_ORG` 替换为实际公司组织名。本 README 命令中的占位符也需要手动替换。
 3. 配置目标业务仓库对 runner、`CI_SSH_KEY` 和公共 workflow/Action 的使用权限。
 4. 核对业务主分支名称。当前入口使用 `master`；公司公共实现的 `@main` 是另一项配置，不会自动改变业务主分支规则。
 
@@ -28,13 +30,59 @@
 - 可执行的项目 `./build.sh`，支持 `-b -t Release`、`-b -t Debug -C`、`-b -t RelWithDebInfo`、`-T`。构建输出到 `build/`，测试程序放在 `build/run_test/`；`-T` 负责创建并推送新 tag。
 - 发布入口的调用 job 需要 `permissions: contents: write`，供 GitHub Release 发布使用；推送 tag 使用的 SSH 身份也需要相应写权限。入口模板已经包含发布 job 的 token 权限声明。
 
-## 1. 使用三个模板
+## 1. 接入业务仓库
+
+### 通过脚本安装
+
+在业务仓库的本地 Git 工作区中运行 [`scripts/install-workflows.sh`](scripts/install-workflows.sh)，即可从公共仓库的 `workflow-templates/` 获取三个入口模板，安装到业务仓库根目录的 `.github/workflows/`。
+
+安装脚本是单文件，可以单独分发给项目开发者，不依赖本仓库其他本地文件。收到脚本后，在业务仓库中执行 `bash /path/to/install-workflows.sh --repo COMPANY_ORG/.github --branch master` 即可。`--repo` 也支持迁移前的普通模板仓库，例如 `OWNER/cicd_template`，前提是该仓库同时包含入口模板和公共 workflow；生成的引用会指向所选仓库。
+
+需要 Bash 3.2+、Git 以及常见 Unix 命令（`awk`、`diff`、`cmp`、`mktemp`）。默认通过 SSH 读取公共仓库，沿用当前 Git/SSH 身份，执行者需要该仓库的读取权限。使用 HTTPS 时可加 `--https`，认证沿用 Git credential helper，不需要把 token 写入命令或脚本。
+
+例如，先获取公司公共仓库中的安装脚本，然后在业务仓库中执行（替换组织名和本地路径）：
+
+```bash
+git clone --depth 1 git@github.com:COMPANY_ORG/.github.git /path/to/company-cicd
+cd /path/to/business-repo
+
+bash /path/to/company-cicd/scripts/install-workflows.sh \
+  --repo COMPANY_ORG/.github \
+  --branch master
+```
+
+脚本从 `--repo` 指定仓库获取模板，同时将生成文件中的公共 workflow 引用改为该仓库。例如指定 `COMPANY_ORG/.github` 后，生成 `uses: COMPANY_ORG/.github/.github/workflows/cpp-build.yml@main`。脚本不会复制公共 Actions、可复用工作流实现或 `.properties.json` 展示信息到业务仓库。
+
+| 参数 | 默认值 | 用途 |
+| --- | --- | --- |
+| `--repo OWNER/REPO` | 必填 | 提供模板及公共 workflow 的仓库 |
+| `--ref REF` | `main` | 读取模板的分支、tag 或提交 SHA，也用于生成引用的 `@REF` |
+| `--branch BRANCH` | `master` | 业务发布分支；build/coverage 排除该分支，release 只在该分支运行 |
+| `--https` | 使用 SSH | 改用 HTTPS 获取模板 |
+| `--dry-run` | 直接生成文件 | 只展示 diff，不写入业务仓库 |
+
+业务仓库使用 `main` 发布、公共模板固定为 `v1` 时，可先预览：
+
+```bash
+bash /path/to/company-cicd/scripts/install-workflows.sh \
+  --repo COMPANY_ORG/.github --ref v1 --branch main --dry-run
+```
+
+`v1` 必须是公共仓库已有的 tag 或分支。确认后去掉 `--dry-run` 安装。使用固定提交 SHA 也遵循相同方式。
+
+脚本检查完全部模板和目标文件后再安装。重复执行时，相同文件跳过；遇到内容不同的同名文件则整次安装停止，不覆盖任何已有 workflow。使用 `--dry-run` 查看冲突差异后手动处理，再次执行。模板缺失、公共 workflow 缺失或模板结构不符也会在安装前停止。脚本针对本仓库三个入口模板的结构，修改模板的公共调用方式或 `[master]` 分支条件时，需要同步调整安装脚本。
+
+生成后，在接入分支审阅 `.github/workflows/` 中的文件，再自行 `git add`、提交并推送。脚本不会提交、推送或配置 runner、secrets 和组织权限。推送到 `--branch` 指定分支会按入口规则运行发布流程；其他分支 push 会运行 build 和 coverage。
+
+安装是一次性生成入口文件。以后修改公共 workflow 时，使用 `@main` 的业务仓库会引用更新后的公共实现；入口触发规则等本地文件不会自动同步。需要更新入口文件时，重新预览并处理差异。
+
+### 通过 GitHub 页面或手动复制
 
 | 模板文件 | GitHub 页面名称 | 触发条件 | 执行内容 |
 | --- | --- | --- | --- |
-| `cpp-build.yml` | C++ 构建与测试（非 master） | 非 `master` 分支 push | Release 构建、测试 |
-| `cpp-coverage.yml` | C++ 覆盖率（非 master） | 非 `master` 分支 push | Debug 构建、测试、上传覆盖率报告 |
-| `cpp-release.yml` | C++ 打标与归档（仅 master） | 仅 `master` 分支 push | 构建测试、打 tag、RelWithDebInfo 构建测试、保存 artifact、发布 GitHub Release |
+| `cpp-build.yml` | C++ Build and Test (non-master) | 非 `master` 分支 push | Release 构建、测试 |
+| `cpp-coverage.yml` | C++ Coverage (non-master) | 非 `master` 分支 push | Debug 构建、测试、上传覆盖率报告 |
+| `cpp-release.yml` | C++ Tag and Release (master only) | 仅 `master` 分支 push | 构建测试、打 tag、RelWithDebInfo 构建测试、保存 artifact、发布 GitHub Release |
 
 1. 在业务仓库打开 **Actions → New workflow**，搜索上面的模板名称，点击 **Configure**。
 2. 按需添加模板，将生成的 YAML 提交到业务仓库的 `.github/workflows/`。
@@ -120,3 +168,14 @@ jobs:
 公共实现内部使用 `$/actions/...` 引用同仓库、同一提交的 Action，业务仓库无需复制这些文件。
 
 更多语法见 [GitHub 复用工作流说明](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)、[同仓库 Action 引用说明](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepsuses)。
+
+## 安装脚本测试
+
+在本仓库根目录执行（仅测试需要 Python 3）：
+
+```bash
+bash -n scripts/install-workflows.sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+测试在临时目录创建 Git 仓库，将 SSH/HTTPS 源地址映射到本地，覆盖安装、重复执行、冲突保护、预览、分支及 tag/SHA 引用、模板缺失和符号链接等场景。不会连接 GitHub、注册 runner 或运行业务 CI。
