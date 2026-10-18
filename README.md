@@ -6,7 +6,6 @@
 仓库根目录/
 ├── README.md
 ├── scripts/                 # 业务仓库 workflow 安装脚本
-├── tests/                   # 安装脚本的本地回归测试
 ├── workflow-templates/       # 业务仓库入口模板和展示信息
 ├── .github/workflows/       # 可复用工作流
 └── actions/                 # 公共 Action、容器入口和阶段脚本
@@ -168,14 +167,3 @@ jobs:
 公共实现内部使用 `$/actions/...` 引用同仓库、同一提交的 Action，业务仓库无需复制这些文件。
 
 更多语法见 [GitHub 复用工作流说明](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)、[同仓库 Action 引用说明](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepsuses)。
-
-## 安装脚本测试
-
-在本仓库根目录执行（仅测试需要 Python 3）：
-
-```bash
-bash -n scripts/install-workflows.sh
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py' -v
-```
-
-测试在临时目录创建 Git 仓库，将 SSH/HTTPS 源地址映射到本地，覆盖安装、重复执行、冲突保护、预览、分支及 tag/SHA 引用、模板缺失和符号链接等场景。不会连接 GitHub、注册 runner 或运行业务 CI。
