@@ -13,23 +13,23 @@ permissions:
 jobs:
   coverage:
     name: Debug build, test and coverage
-    runs-on: [self-hosted, linux, x64, wwj-cicd]
+    runs-on: [self-hosted, linux, x64, cpp-cicd-runner]
     timeout-minutes: 30
 
     steps:
       - name: Setup
-        uses: $/.github/actions/setup
+        uses: $/actions/setup
         with:
           ssh-key: ${{ secrets.CI_SSH_KEY }}
 
       - name: Build and test with coverage instrumentation
-        uses: $/.github/actions/build-test
+        uses: $/actions/build-test
         with:
           build-type: Debug
           coverage: "true"
 
       - name: Generate coverage report
-        uses: $/.github/actions
+        uses: $/actions
         with:
           phase: coverage
           build-type: Debug

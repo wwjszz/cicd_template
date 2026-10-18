@@ -39,7 +39,6 @@ lcov "${lcov_options[@]}" \
     --add-tracefile "$report_dir/run.info" \
     --output-file "$report_dir/all.info"
 
-# Keep the exclusions from the existing project build script.
 lcov "${lcov_options[@]}" --remove "$report_dir/all.info" \
     '*/x_*' '*8/*' '/usr/include/*' \
     --output-file "$report_dir/coverage.info"

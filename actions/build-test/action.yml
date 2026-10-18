@@ -21,12 +21,12 @@ runs:
   using: composite
   steps:
     - name: Prepare
-      uses: $/.github/actions
+      uses: $/actions
       with:
         phase: prepare
 
     - name: Build
-      uses: $/.github/actions
+      uses: $/actions
       with:
         phase: build
         build-type: ${{ inputs.build-type }}
@@ -34,6 +34,6 @@ runs:
 
     - name: Test
       if: ${{ inputs.run-tests == 'true' || inputs.coverage == 'true' }}
-      uses: $/.github/actions
+      uses: $/actions
       with:
         phase: test

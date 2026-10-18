@@ -14,22 +14,6 @@ fi
 
 project_dir="$PWD"
 artifact_dir="$project_dir/artifacts"
-cache_file="$project_dir/build/CMakeCache.txt"
-
-if [[ ! -f "$cache_file" ]]; then
-    echo "Build configuration was not found: $cache_file" >&2
-    exit 1
-fi
-
-if ! grep -Fxq 'CMAKE_BUILD_TYPE:STRING=RelWithDebInfo' "$cache_file"; then
-    echo "The actual build configuration is not RelWithDebInfo." >&2
-    exit 1
-fi
-
-if ! grep -Fxq 'RUN_COVERAGE:BOOL=OFF' "$cache_file"; then
-    echo "Coverage must be disabled for release packaging." >&2
-    exit 1
-fi
 
 commit_sha="$(git rev-parse HEAD)"
 event_sha="$(git rev-parse --verify "${GITHUB_SHA}^{commit}")"

@@ -1,0 +1,7 @@
+{
+  "name": "C++ 构建与测试（非 master）",
+  "description": "非 master 分支 push 时执行 Release 构建和测试；不响应 tag push。",
+  "categories": [
+    "C++"
+  ]
+}

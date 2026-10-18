@@ -1,0 +1,16 @@
+name: C++ Build and Test
+
+on:
+  push:
+    branches-ignore: [master]
+    tags-ignore: ['**']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: ${{ !github.event.deleted }}
+    uses: COMPANY_ORG/.github/.github/workflows/cpp-build.yml@main
+    secrets:
+      CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}

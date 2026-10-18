@@ -29,7 +29,7 @@ case "$COVERAGE" in
         ;;
 esac
 
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 echo "Enabling the compiler toolchain..."
 source /opt/rh/devtoolset-8/enable

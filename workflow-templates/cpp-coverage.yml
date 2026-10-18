@@ -1,0 +1,16 @@
+name: C++ Coverage
+
+on:
+  push:
+    branches-ignore: [master]
+    tags-ignore: ['**']
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    if: ${{ !github.event.deleted }}
+    uses: COMPANY_ORG/.github/.github/workflows/cpp-coverage.yml@main
+    secrets:
+      CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}

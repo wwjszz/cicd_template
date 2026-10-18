@@ -13,16 +13,16 @@ permissions:
 jobs:
   build:
     name: Release build and test
-    runs-on: [self-hosted, linux, x64, wwj-cicd]
+    runs-on: [self-hosted, linux, x64, cpp-cicd-runner]
     timeout-minutes: 30
 
     steps:
       - name: Setup
-        uses: $/.github/actions/setup
+        uses: $/actions/setup
         with:
           ssh-key: ${{ secrets.CI_SSH_KEY }}
 
       - name: Build and test
-        uses: $/.github/actions/build-test
+        uses: $/actions/build-test
         with:
           build-type: Release

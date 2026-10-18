@@ -1,0 +1,7 @@
+{
+  "name": "C++ 覆盖率（非 master）",
+  "description": "非 master 分支 push 时执行 Debug 构建、测试并上传覆盖率报告；不响应 tag push。",
+  "categories": [
+    "C++"
+  ]
+}

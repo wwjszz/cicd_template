@@ -1,0 +1,7 @@
+{
+  "name": "C++ 打标与归档（仅 master）",
+  "description": "仅 master 分支 push 时构建、测试并自动打 tag，再构建 RelWithDebInfo、保存 Actions artifact，并创建 GitHub Release 和上传附件。",
+  "categories": [
+    "C++"
+  ]
+}
