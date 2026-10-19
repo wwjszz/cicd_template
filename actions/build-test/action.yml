@@ -21,19 +21,22 @@ runs:
   using: composite
   steps:
     - name: Prepare
-      uses: $/actions
-      with:
-        phase: prepare
+      shell: bash
+      env:
+        CI_ACTION_PATH: ${{ github.action_path }}
+      run: bash "$CI_ACTION_PATH/../shared/run-container.sh" build-test/prepare.sh
 
     - name: Build
-      uses: $/actions
-      with:
-        phase: build
-        build-type: ${{ inputs.build-type }}
-        coverage: ${{ inputs.coverage }}
+      shell: bash
+      env:
+        CI_ACTION_PATH: ${{ github.action_path }}
+        BUILD_TYPE: ${{ inputs.build-type }}
+        COVERAGE: ${{ inputs.coverage }}
+      run: bash "$CI_ACTION_PATH/../shared/run-container.sh" build-test/build.sh
 
     - name: Test
       if: ${{ inputs.run-tests == 'true' || inputs.coverage == 'true' }}
-      uses: $/actions
-      with:
-        phase: test
+      shell: bash
+      env:
+        CI_ACTION_PATH: ${{ github.action_path }}
+      run: bash "$CI_ACTION_PATH/../shared/run-container.sh" build-test/test.sh

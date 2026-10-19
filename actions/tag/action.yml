@@ -1,0 +1,24 @@
+name: Generate version tag
+description: Create and push one version tag using the project build script
+
+outputs:
+  tag:
+    description: Generated version tag
+    value: ${{ steps.version.outputs.tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate and push version tag
+      shell: bash
+      env:
+        CI_ACTION_PATH: ${{ github.action_path }}
+      run: bash "$CI_ACTION_PATH/../shared/run-container.sh" tag/tag.sh
+
+    - name: Export version tag
+      id: version
+      shell: bash
+      run: |
+        tag="$(cat "$GITHUB_WORKSPACE/artifacts/release-tag.txt")"
+        git check-ref-format "refs/tags/$tag"
+        printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"

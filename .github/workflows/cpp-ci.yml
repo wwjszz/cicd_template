@@ -55,9 +55,7 @@ jobs:
 
             - name: Coverage
               if: ${{ inputs.coverage }}
-              uses: $/actions
-              with:
-                  phase: coverage
+              uses: $/actions/coverage
 
             - name: Upload coverage report
               if: ${{ inputs.coverage }}

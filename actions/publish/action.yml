@@ -1,5 +1,5 @@
 name: Publish build output
-description: Copy release files to the server release directory
+description: Move the build output directory into the server version directory
 
 inputs:
   deploy-target:
@@ -30,4 +30,4 @@ runs:
         PUBLISH_DIR: ${{ inputs.publish-dir }}
         RELEASE_TAG: ${{ inputs.release-tag }}
         PUBLISH_ACTION_PATH: ${{ github.action_path }}
-      run: bash "$PUBLISH_ACTION_PATH/../scripts/publish.sh"
+      run: bash "$PUBLISH_ACTION_PATH/publish.sh"

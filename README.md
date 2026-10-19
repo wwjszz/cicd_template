@@ -8,7 +8,7 @@
 ├── scripts/                 # 业务仓库 workflow 安装脚本
 ├── workflow-templates/       # 业务仓库入口模板和展示信息
 ├── .github/workflows/       # 可复用工作流
-└── actions/                 # 公共 Action、容器入口和阶段脚本
+└── actions/                 # 按操作划分的 Action 和公共容器入口
 ```
 
 ## 部署到公司组织
@@ -27,7 +27,7 @@
 - 仓库或组织 Secret `CI_SSH_KEY`，用于拉取源码、私有依赖和推送 tag，并授权业务仓库使用。
 - 在线 runner，标签包含 `self-hosted, linux, x64, cpp-cicd-runner`；提供 Docker 和镜像 `localhost:5000/cxx_builder_devtoolset_8:1.3`。
 - 可执行的项目 `./build.sh`，支持 `-b -t Release`、`-b -t Debug -C`、`-b -t RelWithDebInfo`、`-T`。构建输出到 `build/`，测试程序放在 `build/run_test/`；`-T` 负责创建并推送新 tag。
-- `CI_SSH_KEY` 对应的 SSH 身份需要推送 tag 的权限。发布产物直接复制到服务器，入口使用 `permissions: contents: read`。
+- `CI_SSH_KEY` 对应的 SSH 身份需要推送 tag 的权限。发布步骤将指定产物目录移动到服务器版本目录，入口使用 `permissions: contents: read`。
 - 发布用 runner 配置并挂载 `APPLICATION_RELEASE_ROOT`、`STRATEGY_RELEASE_ROOT`；默认产物目录分别由 `APPLICATION_PUBLISH_DIR`、`STRATEGY_PUBLISH_DIR` 指定。
 
 ## 1. 接入业务仓库
@@ -66,7 +66,7 @@ bash /path/to/install-workflows.sh --repo wwjszz/cicd_template
 
 `ci.yml` 通过 `needs: build` 保证编译测试成功后才执行 Coverage。两个入口均忽略 tag push，并跳过删除分支的事件。`master` 的任意 push 都会触发发布；需要限制合并时，在仓库规则中要求通过 PR 和 CI 检查。
 
-覆盖率报告在 Actions 的 **Artifacts** 下载。发布产物保存在服务器的 `{发布根目录}/{发布名称}/{tag}/bin/`，同一版本目录保存 `build-info.txt` 和 `SHA256SUMS`，不上传编译产物到 GitHub。
+覆盖率报告在 Actions 的 **Artifacts** 下载，保留 30 天。发布步骤将 `publish-dir` 指定的目录整体移动到服务器的 `{发布根目录}/{发布名称}/{tag}/` 下，并保留目录名。例如 `publish-dir: build/bin` 的结果是 `{发布根目录}/{发布名称}/{tag}/bin/`，工作区中原来的 `build/bin` 随之移走。服务器产物的保留时间单独管理，不受 Artifact 的 30 天配置影响。
 
 `release.yml` 默认 `deploy-target: none`，仍执行编译、测试和打 tag，但跳过文件发布。`app` 用于系统发布，`strategy` 用于策略发布；选择 `none` 时无需填写 `release-name` 和 `publish-dir`。打标调用项目的 `build.sh -T`，整条流程重跑可能生成新 tag。
 
@@ -126,6 +126,16 @@ jobs:
 
 ### 自己编排每个步骤
 
+五个独立 Action 分别负责源码准备、编译测试、覆盖率报告、打标和服务器发布：
+
+| Action | 输入 | 输出或结果 |
+| --- | --- | --- |
+| [`setup`](actions/setup/action.yml) | `ssh-key`，可选 `ref` | 检出源码并启动 SSH agent |
+| [`build-test`](actions/build-test/action.yml) | `build-type`、`run-tests`、`coverage` | 初始化项目、编译并按配置运行测试 |
+| [`coverage`](actions/coverage/action.yml) | 无 | 从已有覆盖率数据生成 `build/test_coverage/` |
+| [`tag`](actions/tag/action.yml) | 无 | 创建并推送一个新 tag，通过 `outputs.tag` 返回名称 |
+| [`publish`](actions/publish/action.yml) | `deploy-target`、`release-name`、`release-tag`，可选 `publish-dir` | 将产物目录移动到服务器版本目录 |
+
 在 job 的 `steps` 中依次调用 [`setup`](actions/setup/action.yml) 和 [`build-test`](actions/build-test/action.yml)：
 
 ```yaml
@@ -145,10 +155,65 @@ jobs:
 `setup` 完成源码 checkout 和 SSH agent 初始化：`ssh-key` 必填，`ref` 可选，留空时检出触发事件对应的源码。
 `build-test` 依次执行 Prepare、Build、Test：`build-type` 默认 `Release`，`run-tests` 默认 `"true"`，`coverage` 默认 `"false"`。Action 的开关参数使用字符串 `"true"` / `"false"`；开启 coverage 时始终运行测试。
 
-`build-test` 的 `coverage: "true"` 只开启插桩并运行测试。生成报告还需调用 [`actions/`](actions/action.yml)，传入 `phase: coverage`，再上传 `build/test_coverage/`；完整步骤参考 [`cpp-coverage.yml`](.github/workflows/cpp-coverage.yml)。
-单个阶段也可直接调用 `actions/`：`phase` 必填，支持 `prepare`、`build`、`test`、`coverage`、`tag`；`build-type` 和 `coverage` 的默认值分别为 `Release`、`"false"`。打标与服务器发布的完整流程参考 [`cpp-release.yml`](.github/workflows/cpp-release.yml)。
+`build-test` 的 `coverage: "true"` 只开启插桩并运行测试。生成报告需要在同一个 job 中调用 `coverage`，报告上传和保留时间由 workflow 配置。上方编译步骤设置 `build-type: Debug`、`coverage: "true"` 后，可以接上：
+
+```yaml
+- name: Generate coverage report
+  uses: COMPANY_ORG/.github/actions/coverage@main
+
+- name: Upload coverage report
+  uses: actions/upload-artifact@v7.0.2
+  with:
+    name: coverage-report
+    path: build/test_coverage/
+    if-no-files-found: error
+    retention-days: 30
+```
+
+打标前先完成 `setup` 和 Release 编译测试，再调用 `tag`：
+
+```yaml
+- name: Generate and push version tag
+  id: version
+  uses: COMPANY_ORG/.github/actions/tag@main
+```
+
+同一 job 的后续步骤通过 `${{ steps.version.outputs.tag }}` 获取版本号；跨 job 使用时，先映射为 job output，再通过 `needs` 获取。Action 内部处理版本号的读取和校验，workflow 无需读取中间文件。完整打标、按 tag 检出、RelWithDebInfo 编译测试和服务器发布的顺序参考 [`cpp-release.yml`](.github/workflows/cpp-release.yml)。
+
+旧版直接调用 `actions/` 并传入 `phase` 的自定义 workflow，需要迁移到对应的独立 Action。项目初始化、编译和测试统一由 `build-test` 处理。
 
 公共 workflow 在 `jobs.<job>.uses` 中引用，Action 在 `steps[].uses` 中引用。当前模板和示例使用公司 `.github` 仓库的 `@main`，接入前需要完成部署并替换组织名；正式使用时也可以固定到已验证的版本 tag 或提交 SHA。
 公共实现内部使用 `$/actions/...` 引用同仓库、同一提交的 Action，业务仓库无需复制这些文件。
 
 更多语法见 [GitHub 复用工作流说明](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)、[同仓库 Action 引用说明](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepsuses)。
+
+## 3. Action 代码结构
+
+每个操作的 Action 定义与脚本放在同一个目录：
+
+```text
+actions/
+├── setup/
+│   └── action.yml
+├── build-test/
+│   ├── action.yml
+│   ├── prepare.sh
+│   ├── build.sh
+│   └── test.sh
+├── coverage/
+│   ├── action.yml
+│   └── coverage.sh
+├── tag/
+│   ├── action.yml
+│   └── tag.sh
+├── publish/
+│   ├── action.yml
+│   └── publish.sh
+└── shared/
+    ├── run-container.sh
+    └── container-entrypoint.sh
+```
+
+`build-test`、`coverage` 和 `tag` 通过 `shared/run-container.sh` 启动编译容器，复用工作区挂载、SSH agent 和镜像配置。公共入口将这些脚本放入共享临时目录供 Docker 挂载，容器内的 `container-entrypoint.sh` 启用工具链后执行指定脚本。
+
+`setup` 和 `publish` 在 runner 环境执行。公共 workflow 负责操作顺序、job 依赖、runner 选择和 Artifact 上传；业务仓库入口负责触发事件和业务发布参数。

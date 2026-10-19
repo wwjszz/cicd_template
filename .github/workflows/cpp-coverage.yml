@@ -29,11 +29,7 @@ jobs:
           coverage: "true"
 
       - name: Generate coverage report
-        uses: $/actions
-        with:
-          phase: coverage
-          build-type: Debug
-          coverage: "true"
+        uses: $/actions/coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7.0.2

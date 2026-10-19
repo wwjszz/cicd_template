@@ -53,17 +53,8 @@ jobs:
           build-type: Release
 
       - name: Generate and push version tag
-        uses: $/actions
-        with:
-          phase: tag
-
-      - name: Export version tag
         id: version
-        shell: bash
-        run: |
-          tag="$(cat artifacts/release-tag.txt)"
-          git check-ref-format "refs/tags/$tag"
-          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+        uses: $/actions/tag
 
   release:
     name: RelWithDebInfo build and publish
@@ -79,7 +70,7 @@ jobs:
         uses: $/actions/setup
         with:
           ssh-key: ${{ secrets.CI_SSH_KEY }}
-          ref: refs/tags/${{ needs.tag.outputs.tag}}
+          ref: refs/tags/${{ needs.tag.outputs.tag }}
 
       - name: Verify release source
         shell: bash

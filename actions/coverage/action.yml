@@ -1,0 +1,11 @@
+name: Generate coverage report
+description: Generate coverage reports from an instrumented build after running tests
+
+runs:
+  using: composite
+  steps:
+    - name: Generate coverage report
+      shell: bash
+      env:
+        CI_ACTION_PATH: ${{ github.action_path }}
+      run: bash "$CI_ACTION_PATH/../shared/run-container.sh" coverage/coverage.sh
