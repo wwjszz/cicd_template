@@ -9,7 +9,7 @@ Usage: bash /path/to/install-workflows.sh --repo OWNER/REPO
   --repo OWNER/REPO  Shared template repository (required)
   -h, --help         Show this help
 
-Fetches main over SSH and installs build, coverage and release entry points.
+Fetches main over SSH and installs ci.yml and release.yml from workflow-templates/.
 Identical files are skipped; conflicting files are not overwritten.
 Release defaults to deploy-target: none; choose app or strategy to publish files.
 EOF
@@ -43,7 +43,7 @@ trap 'rm -rf -- "$scratch"' EXIT
 git clone --quiet --depth 1 --single-branch --branch main --no-tags \
   "git@github.com:$source_repo.git" "$scratch/source"
 
-workflows=(cpp-build.yml cpp-coverage.yml cpp-release.yml)
+workflows=(ci.yml release.yml)
 mkdir "$scratch/generated"
 for workflow in "${workflows[@]}"; do
   template="$scratch/source/workflow-templates/$workflow"

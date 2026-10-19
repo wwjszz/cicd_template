@@ -1,0 +1,5 @@
+{
+  "name": "C++ Tag and Release",
+  "description": "master 分支收到推送后，执行 Release 编译测试、自动打 tag、RelWithDebInfo 编译测试，并按配置发布产物到服务器目录。",
+  "categories": ["C++"]
+}

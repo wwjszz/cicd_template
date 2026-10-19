@@ -1,7 +1,0 @@
-{
-  "name": "C++ 通用发布 (master only)",
-  "description": "master push 时构建测试并打 tag；自选 app 或 strategy 发布到服务器，默认 none 不复制产物。",
-  "categories": [
-    "C++"
-  ]
-}

@@ -1,7 +1,0 @@
-{
-  "name": "C++ Build and Test (non-master)",
-  "description": "Build and test Release on pushes to branches other than master. Tag pushes are ignored.",
-  "categories": [
-    "C++"
-  ]
-}

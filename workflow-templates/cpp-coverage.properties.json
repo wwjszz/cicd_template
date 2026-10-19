@@ -1,7 +1,0 @@
-{
-  "name": "C++ Coverage (non-master)",
-  "description": "Build and test Debug and upload coverage reports on pushes to branches other than master. Tag pushes are ignored.",
-  "categories": [
-    "C++"
-  ]
-}

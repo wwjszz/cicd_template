@@ -1,0 +1,25 @@
+name: C++ CI
+
+on:
+  push:
+    branches-ignore: [master]
+    tags-ignore: ['**']
+
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: ${{ github.event.deleted != true }}
+    uses: COMPANY_ORG/.github/.github/workflows/cpp-build.yml@main
+    secrets:
+      CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}
+
+  coverage:
+    needs: build
+    uses: COMPANY_ORG/.github/.github/workflows/cpp-coverage.yml@main
+    secrets:
+      CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}

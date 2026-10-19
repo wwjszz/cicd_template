@@ -1,0 +1,5 @@
+{
+  "name": "C++ CI",
+  "description": "非 master 分支推送，以及向 master 提交 PR 时，依次执行 Release 编译测试和 Coverage。",
+  "categories": ["C++"]
+}

@@ -14,7 +14,7 @@
 ## 部署到公司组织
 
 1. 将完整内容放入公司 `.github` 仓库的 `main` 分支；公司仓库已有其他文件时保留这些文件。
-2. 按下方说明通过脚本接入业务仓库，脚本自动填写公共仓库名称。若使用 GitHub 页面或手动复制接入，需要将所选 `workflow-templates/*.yml` 中的 `COMPANY_ORG` 替换为实际公司组织名。本 README 命令中的占位符也需要手动替换。
+2. 按下方说明通过脚本接入业务仓库，脚本自动填写公共仓库名称。若使用 GitHub 页面或手动复制接入，需要将所选 `workflow-templates/*.yml` 中的 `COMPANY_ORG/.github` 替换为实际公共仓库名称。本 README 命令中的占位符也需要手动替换。
 3. 配置目标业务仓库对 runner、`CI_SSH_KEY` 和公共 workflow/Action 的使用权限。
 4. 核对业务主分支名称。当前入口使用 `master`；公司公共实现的 `@main` 是另一项配置，不会自动改变业务主分支规则。
 
@@ -42,35 +42,33 @@ bash /path/to/install-workflows.sh --repo wwjszz/cicd_template
 
 迁移到公司组织后，将仓库参数改为 `--repo COMPANY_ORG/.github`。脚本可以单独分发，执行者需要该模板仓库的 SSH 读取权限。
 
-脚本固定通过 SSH 读取模板仓库的 `main` 分支，只安装 `cpp-build.yml`、`cpp-coverage.yml`、`cpp-release.yml` 三个入口到业务仓库的 `.github/workflows/`，并替换公共仓库名称。
+脚本固定通过 SSH 读取模板仓库的 `main` 分支，只安装 `ci.yml`、`release.yml` 两个入口到业务仓库的 `.github/workflows/`，并替换公共仓库名称。
 
-- 触发规则和发布分支沿用入口模板，当前为非 `master` 分支运行 build、coverage，`master` 运行 release；需要调整时直接修改入口文件。
-- 通用 release 默认 `deploy-target: none`；需要发布文件时改成 `app` 或 `strategy`。
+- 触发规则沿用入口模板：非 `master` 分支 push、目标为 `master` 的 PR 依次运行 build、coverage；`master` push 运行 release。
+- release 默认 `deploy-target: none`；系统发布改为 `app`，策略发布改为 `strategy`。
 - 已有相同文件跳过；存在不同内容的同名文件则停止安装，不覆盖文件。
 - 脚本不会提交、推送或配置 runner、secrets。生成后审阅文件，再自行提交。
 
 入口文件不会自动同步；使用 `@main` 引用的公共 workflow 会随模板仓库更新。
 
+已接入旧入口的仓库，切换时需自行移除或停用原有入口，避免重复执行和打 tag。
+
 ### 通过 GitHub 页面或手动复制
+
+将模板部署到组织的 `.github` 仓库后，在业务仓库打开 **Actions → New workflow**，选择以下两个模板：
 
 | 模板文件 | GitHub 页面名称 | 触发条件 | 执行内容 |
 | --- | --- | --- | --- |
-| `cpp-build.yml` | C++ Build and Test (non-master) | 非 `master` 分支 push | Release 构建、测试 |
-| `cpp-coverage.yml` | C++ Coverage (non-master) | 非 `master` 分支 push | Debug 构建、测试、上传覆盖率报告 |
-| `cpp-release.yml` | C++ 通用发布 (master only) | 仅 `master` 分支 push | 自选 `app`、`strategy` 或 `none`，默认不复制产物 |
-| `cpp-app-release.yml` | C++ 应用发布 (master only) | 仅 `master` 分支 push | 构建测试、打 tag、RelWithDebInfo 构建测试、发布到应用目录 |
-| `cpp-strategy-release.yml` | C++ 策略发布 (master only) | 仅 `master` 分支 push | 构建测试、打 tag、RelWithDebInfo 构建测试、发布到策略目录 |
+| `ci.yml` | C++ CI | 非 `master` 分支 push、目标为 `master` 的 PR | Release 构建测试 → Debug 构建测试和覆盖率报告 |
+| `release.yml` | C++ Tag and Release | `master` 分支 push | Release 构建测试 → 打 tag → RelWithDebInfo 构建测试 → 按配置发布产物 |
 
-1. 在业务仓库打开 **Actions → New workflow**，搜索上面的模板名称，点击 **Configure**。
-2. 添加 build、coverage，并从三个发布模板中选择一个，将 YAML 提交到业务仓库的 `.github/workflows/`。
-3. 向开发分支 push 运行 build、coverage；向 `master` push 运行 release。
+也可以从 [`workflow-templates/`](workflow-templates/) 复制这两个 YAML 到业务仓库的 `.github/workflows/`。将 `uses` 中的 `COMPANY_ORG/.github` 替换为实际公共仓库，例如 `wwjszz/cicd_template`。`.properties.json` 仅用于页面展示，不需要复制。
 
-也可以从 [`workflow-templates/`](workflow-templates/) 复制 build、coverage 和所选的一个发布入口到业务仓库的 `.github/workflows/`，不需要复制 `.properties.json`。三个发布入口都调用同一个公共 `cpp-release.yml`，同一仓库只保留一个发布入口，避免重复打 tag。
+`ci.yml` 通过 `needs: build` 保证编译测试成功后才执行 Coverage。两个入口均忽略 tag push，并跳过删除分支的事件。`master` 的任意 push 都会触发发布；需要限制合并时，在仓库规则中要求通过 PR 和 CI 检查。
 
-所有入口模板都忽略 tag push，并在外层调用 job 中跳过删除分支的事件。默认 build、coverage 在非 `master` 分支运行，release 在 `master` 运行；这些触发规则由业务仓库的入口 workflow 控制。
-覆盖率报告仍在 Actions 的 **Artifacts** 下载。发布产物保存在服务器的 `{发布根目录}/{发布名称}/{tag}/bin/`，同一版本目录保存 `build-info.txt` 和 `SHA256SUMS`。不上传编译产物到 GitHub。
+覆盖率报告在 Actions 的 **Artifacts** 下载。发布产物保存在服务器的 `{发布根目录}/{发布名称}/{tag}/bin/`，同一版本目录保存 `build-info.txt` 和 `SHA256SUMS`，不上传编译产物到 GitHub。
 
-发布流程在同一次运行中先完成 Release 编译、测试和打标，再检出生成的 tag 执行 RelWithDebInfo 编译、测试；`app`、`strategy` 会复制产物，`none` 跳过复制。当前打标阶段每次调用项目的 `build.sh -T` 生成一个新 tag；整条流程重跑可能再次生成版本，不应视为同一版本的幂等重试。
+`release.yml` 默认 `deploy-target: none`，仍执行编译、测试和打 tag，但跳过文件发布。`app` 用于系统发布，`strategy` 用于策略发布；选择 `none` 时无需填写 `release-name` 和 `publish-dir`。打标调用项目的 `build.sh -T`，整条流程重跑可能生成新 tag。
 
 ## 2. 自己写 workflow、引用和传参
 
@@ -80,9 +78,9 @@ bash /path/to/install-workflows.sh --repo wwjszz/cicd_template
 
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
-| `deploy-target` | `none` | `app` 发布应用，`strategy` 发布策略，`none` 仅构建测试和打 tag |
-| `release-name` | 业务仓库名 | 服务器上的应用或策略名称 |
-| `publish-dir` | runner 配置 | 项目内的产物目录，可按仓库覆盖 |
+| `deploy-target` | `none` | `app` 系统发布，`strategy` 策略发布，`none` 仅构建测试和打 tag |
+| `release-name` | 业务仓库名 | 系统或策略的发布名称；`none` 时无需填写 |
+| `publish-dir` | runner 配置 | 项目内的产物目录；`none` 时无需填写 |
 
 发布根目录固定取 runner 配置，调用方不传 `release-root`。`app` 对应 `APPLICATION_RELEASE_ROOT` / `APPLICATION_PUBLISH_DIR`，`strategy` 对应 `STRATEGY_RELEASE_ROOT` / `STRATEGY_PUBLISH_DIR`。
 

@@ -1,7 +1,0 @@
-{
-  "name": "C++ 应用发布 (master only)",
-  "description": "master push 时构建测试并打 tag，再以 RelWithDebInfo 构建测试，发布到应用目录。",
-  "categories": [
-    "C++"
-  ]
-}

@@ -1,0 +1,26 @@
+name: C++ Release
+
+on:
+  push:
+    branches: [master]
+    tags-ignore: ['**']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    if: ${{ github.event.deleted != true }}
+    uses: COMPANY_ORG/.github/.github/workflows/cpp-release.yml@main
+    with:
+      # none：不发布文件；app：系统发布；strategy：策略发布
+      deploy-target: none
+
+      # 可选，默认使用当前仓库名；deploy-target 为 none 时无需填写
+      # release-name: my-app
+
+      # 可选，默认使用 runner 配置的产物目录；deploy-target 为 none 时无需填写
+      # publish-dir: build/bin
+
+    secrets:
+      CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}
