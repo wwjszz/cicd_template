@@ -15,7 +15,8 @@ Options:
   --dry-run          Preview the generated diff without writing files
   -h, --help         Show this help
 
-Installs cpp-build.yml, cpp-coverage.yml and cpp-release.yml.
+Installs cpp-build.yml, cpp-coverage.yml and the generic cpp-release.yml.
+Release defaults to deploy-target: none; choose app or strategy to publish files.
 Identical files are skipped. Conflicting files abort installation before writing.
 Only local files are created. No git add, commit, push or permission changes.
 EOF

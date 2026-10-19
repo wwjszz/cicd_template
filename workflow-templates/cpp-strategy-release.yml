@@ -1,0 +1,19 @@
+name: C++ Strategy Release
+
+on:
+  push:
+    branches: [master]
+    tags-ignore: ['**']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    if: ${{ !github.event.deleted }}
+    uses: COMPANY_ORG/.github/.github/workflows/cpp-release.yml@main
+    with:
+      # 策略发布：发布根目录和默认产物目录由 runner 配置。
+      deploy-target: strategy
+    secrets:
+      CI_SSH_KEY: ${{ secrets.CI_SSH_KEY }}

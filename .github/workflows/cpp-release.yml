@@ -2,6 +2,22 @@ name: C++ Tag and Release
 
 on:
   workflow_call:
+    inputs:
+      deploy-target:
+        description: app, strategy or none
+        type: string
+        default: none
+
+      release-name:
+        description: Application or strategy name; default to repository name
+        type: string
+        default: ""
+
+      publish-dir:
+        description: Optional project-relative directory; empty uses the runner default
+        type: string
+        default: ""
+
     secrets:
       CI_SSH_KEY:
         description: SSH private key for source and private build dependencies
@@ -17,9 +33,9 @@ jobs:
     timeout-minutes: 30
 
     concurrency:
-        group: auto-version-tag
-        cancel-in-progress: false
-        queue: max
+      group: auto-version-tag
+      cancel-in-progress: false
+      queue: max
 
     outputs:
       tag: ${{ steps.version.outputs.tag }}
@@ -51,10 +67,7 @@ jobs:
 
 
   release:
-    permissions:
-      contents: write
-
-    name: RelWithDebInfo build and artifact
+    name: RelWithDebInfo build and publish
     needs: tag
     runs-on: [self-hosted, linux, x64, cpp-cicd-runner]
     timeout-minutes: 30
@@ -82,32 +95,11 @@ jobs:
         with:
           build-type: RelWithDebInfo
 
-      - name: Package
-        uses: $/actions
+      - name: Publish to server
+        if: ${{ inputs.deploy-target != 'none' }}
+        uses: $/actions/publish
         with:
-          phase: package
-          build-type: RelWithDebInfo
-          coverage: "false"
-
-      - name: Persist artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: release-build-${{ github.sha }}-${{ github.run_attempt }}
-          path: |
-            artifacts/build-output.tar.gz
-            artifacts/build-info.txt
-            artifacts/SHA256SUMS
-          if-no-files-found: error
-          compression-level: 0
-
-      - name: Publish Github Release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ needs.tag.outputs.tag }}
-          name: Release ${{ needs.tag.outputs.tag }}
-          generate_release_notes: true
-          fail_on_empty_release: true
-          files: |
-            artifacts/build-output.tar.gz
-            artifacts/build-info.txt
-            artifacts/SHA256SUMS
+          deploy-target: ${{ inputs.deploy-target }}
+          release-name: ${{ inputs.release-name || github.event.repository.name }}
+          publish-dir: ${{ inputs.publish-dir }}
+          release-tag: ${{ needs.tag.outputs.tag }}

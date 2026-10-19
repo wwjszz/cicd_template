@@ -1,0 +1,33 @@
+name: Publish build output
+description: Copy release files to the server release directory
+
+inputs:
+  deploy-target:
+    description: app or strategy
+    required: true
+
+  release-name:
+    description: Application or strategy name
+    required: true
+
+  publish-dir:
+    description: Optional project-relative directory; empty uses the runner default
+    required: false
+    default: ""
+
+  release-tag:
+    description: Version tag to publish
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Publish files
+      shell: bash
+      env:
+        DEPLOY_TARGET: ${{ inputs.deploy-target }}
+        RELEASE_NAME: ${{ inputs.release-name }}
+        PUBLISH_DIR: ${{ inputs.publish-dir }}
+        RELEASE_TAG: ${{ inputs.release-tag }}
+        PUBLISH_ACTION_PATH: ${{ github.action_path }}
+      run: bash "$PUBLISH_ACTION_PATH/../scripts/publish.sh"

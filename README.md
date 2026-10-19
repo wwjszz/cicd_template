@@ -14,7 +14,7 @@
 ## 部署到公司组织
 
 1. 将完整内容放入公司 `.github` 仓库的 `main` 分支；公司仓库已有其他文件时保留这些文件。
-2. 按下方说明通过脚本接入业务仓库，脚本自动填写公共仓库名称。若使用 GitHub 页面或手动复制接入，需要将三个 `workflow-templates/*.yml` 中的 `COMPANY_ORG` 替换为实际公司组织名。本 README 命令中的占位符也需要手动替换。
+2. 按下方说明通过脚本接入业务仓库，脚本自动填写公共仓库名称。若使用 GitHub 页面或手动复制接入，需要将所选 `workflow-templates/*.yml` 中的 `COMPANY_ORG` 替换为实际公司组织名。本 README 命令中的占位符也需要手动替换。
 3. 配置目标业务仓库对 runner、`CI_SSH_KEY` 和公共 workflow/Action 的使用权限。
 4. 核对业务主分支名称。当前入口使用 `master`；公司公共实现的 `@main` 是另一项配置，不会自动改变业务主分支规则。
 
@@ -27,7 +27,8 @@
 - 仓库或组织 Secret `CI_SSH_KEY`，用于拉取源码、私有依赖和推送 tag，并授权业务仓库使用。
 - 在线 runner，标签包含 `self-hosted, linux, x64, cpp-cicd-runner`；提供 Docker 和镜像 `localhost:5000/cxx_builder_devtoolset_8:1.3`。
 - 可执行的项目 `./build.sh`，支持 `-b -t Release`、`-b -t Debug -C`、`-b -t RelWithDebInfo`、`-T`。构建输出到 `build/`，测试程序放在 `build/run_test/`；`-T` 负责创建并推送新 tag。
-- 发布入口的调用 job 需要 `permissions: contents: write`，供 GitHub Release 发布使用；推送 tag 使用的 SSH 身份也需要相应写权限。入口模板已经包含发布 job 的 token 权限声明。
+- `CI_SSH_KEY` 对应的 SSH 身份需要推送 tag 的权限。发布产物直接复制到服务器，入口使用 `permissions: contents: read`。
+- 发布用 runner 配置并挂载 `APPLICATION_RELEASE_ROOT`、`STRATEGY_RELEASE_ROOT`；默认产物目录分别由 `APPLICATION_PUBLISH_DIR`、`STRATEGY_PUBLISH_DIR` 指定。
 
 ## 1. 接入业务仓库
 
@@ -49,6 +50,8 @@ bash /path/to/company-cicd/scripts/install-workflows.sh \
   --repo COMPANY_ORG/.github \
   --branch master
 ```
+
+脚本默认安装 build、coverage 和通用 release 三个入口。通用 release 的 `deploy-target` 默认是 `none`；需要复制产物时，改成 `app` 或 `strategy`。
 
 脚本从 `--repo` 指定仓库获取模板，同时将生成文件中的公共 workflow 引用改为该仓库。例如指定 `COMPANY_ORG/.github` 后，生成 `uses: COMPANY_ORG/.github/.github/workflows/cpp-build.yml@main`。脚本不会复制公共 Actions、可复用工作流实现或 `.properties.json` 展示信息到业务仓库。
 
@@ -81,24 +84,35 @@ bash /path/to/company-cicd/scripts/install-workflows.sh \
 | --- | --- | --- | --- |
 | `cpp-build.yml` | C++ Build and Test (non-master) | 非 `master` 分支 push | Release 构建、测试 |
 | `cpp-coverage.yml` | C++ Coverage (non-master) | 非 `master` 分支 push | Debug 构建、测试、上传覆盖率报告 |
-| `cpp-release.yml` | C++ Tag and Release (master only) | 仅 `master` 分支 push | 构建测试、打 tag、RelWithDebInfo 构建测试、保存 artifact、发布 GitHub Release |
+| `cpp-release.yml` | C++ 通用发布 (master only) | 仅 `master` 分支 push | 自选 `app`、`strategy` 或 `none`，默认不复制产物 |
+| `cpp-app-release.yml` | C++ 应用发布 (master only) | 仅 `master` 分支 push | 构建测试、打 tag、RelWithDebInfo 构建测试、发布到应用目录 |
+| `cpp-strategy-release.yml` | C++ 策略发布 (master only) | 仅 `master` 分支 push | 构建测试、打 tag、RelWithDebInfo 构建测试、发布到策略目录 |
 
 1. 在业务仓库打开 **Actions → New workflow**，搜索上面的模板名称，点击 **Configure**。
-2. 按需添加模板，将生成的 YAML 提交到业务仓库的 `.github/workflows/`。
+2. 添加 build、coverage，并从三个发布模板中选择一个，将 YAML 提交到业务仓库的 `.github/workflows/`。
 3. 向开发分支 push 运行 build、coverage；向 `master` push 运行 release。
 
-也可以直接复制本仓库 [`workflow-templates/`](workflow-templates/) 下的三个 `.yml` 到业务仓库的 `.github/workflows/`，不需要复制 `.properties.json`。
+也可以从 [`workflow-templates/`](workflow-templates/) 复制 build、coverage 和所选的一个发布入口到业务仓库的 `.github/workflows/`，不需要复制 `.properties.json`。三个发布入口都调用同一个公共 `cpp-release.yml`，同一仓库只保留一个发布入口，避免重复打 tag。
 
-三个模板都忽略 tag push，并在外层调用 job 中跳过删除分支的事件。默认 build、coverage 在非 `master` 分支运行，release 在 `master` 运行；这些触发规则由业务仓库的入口 workflow 控制。
-覆盖率报告和发布归档在对应 Actions 运行页面的 **Artifacts** 下载。发布流程还会创建 GitHub Release、自动生成 release notes，并上传 `build-output.tar.gz`、`build-info.txt` 和 `SHA256SUMS` 三个附件。
+所有入口模板都忽略 tag push，并在外层调用 job 中跳过删除分支的事件。默认 build、coverage 在非 `master` 分支运行，release 在 `master` 运行；这些触发规则由业务仓库的入口 workflow 控制。
+覆盖率报告仍在 Actions 的 **Artifacts** 下载。发布产物保存在服务器的 `{发布根目录}/{发布名称}/{tag}/bin/`，同一版本目录保存 `build-info.txt` 和 `SHA256SUMS`。不上传编译产物到 GitHub。
 
-发布流程在同一次运行中先完成 Release 编译、测试和打标，再检出生成的 tag 执行 RelWithDebInfo 编译、测试和归档。当前打标阶段每次调用项目的 `build.sh -T` 生成一个新 tag；整条流程重跑可能再次生成版本，不应视为同一版本的幂等重试。
+发布流程在同一次运行中先完成 Release 编译、测试和打标，再检出生成的 tag 执行 RelWithDebInfo 编译、测试；`app`、`strategy` 会复制产物，`none` 跳过复制。当前打标阶段每次调用项目的 `build.sh -T` 生成一个新 tag；整条流程重跑可能再次生成版本，不应视为同一版本的幂等重试。
 
 ## 2. 自己写 workflow、引用和传参
 
 ### 使用公共 workflow
 
-三个固定工作流 `cpp-build.yml`、`cpp-coverage.yml`、`cpp-release.yml` 只接收 Secret `CI_SSH_KEY`，没有可通过 `with` 修改的输入参数。
+三个固定工作流都接收 Secret `CI_SSH_KEY`。`cpp-build.yml`、`cpp-coverage.yml` 没有 `with` 参数；`cpp-release.yml` 支持：
+
+| 参数 | 默认值 | 说明 |
+| --- | --- | --- |
+| `deploy-target` | `none` | `app` 发布应用，`strategy` 发布策略，`none` 仅构建测试和打 tag |
+| `release-name` | 业务仓库名 | 服务器上的应用或策略名称 |
+| `publish-dir` | runner 配置 | 项目内的产物目录，可按仓库覆盖 |
+
+发布根目录固定取 runner 配置，调用方不传 `release-root`。`app` 对应 `APPLICATION_RELEASE_ROOT` / `APPLICATION_PUBLISH_DIR`，`strategy` 对应 `STRATEGY_RELEASE_ROOT` / `STRATEGY_PUBLISH_DIR`。
+
 公共 workflow 不限制触发事件和分支。需要改为 `main` 分支或增加 `workflow_dispatch` 手动触发时，修改业务仓库入口 workflow 的 `on` 即可。
 
 需要自选 runner、构建类型、测试和覆盖率时，引用 [`cpp-ci.yml`](.github/workflows/cpp-ci.yml)。在业务仓库创建 `.github/workflows/custom-ci.yml`：
@@ -137,7 +151,7 @@ jobs:
 例如普通构建使用 `build-type: Release`、`coverage: false`；覆盖率构建使用 `build-type: Debug`、`coverage: true`。
 `coverage: true` 时始终运行测试，即使 `run-tests: false`。
 普通参数放在 `with`，密钥放在 `secrets`；boolean 参数使用 `true` / `false`，不加引号。
-`cpp-ci.yml` 的触发分支由调用方的 `on` 决定，不包含打标和发布归档。
+`cpp-ci.yml` 的触发分支由调用方的 `on` 决定，不包含打标和服务器发布。
 
 ### 自己编排每个步骤
 
@@ -161,7 +175,7 @@ jobs:
 `build-test` 依次执行 Prepare、Build、Test：`build-type` 默认 `Release`，`run-tests` 默认 `"true"`，`coverage` 默认 `"false"`。Action 的开关参数使用字符串 `"true"` / `"false"`；开启 coverage 时始终运行测试。
 
 `build-test` 的 `coverage: "true"` 只开启插桩并运行测试。生成报告还需调用 [`actions/`](actions/action.yml)，传入 `phase: coverage`，再上传 `build/test_coverage/`；完整步骤参考 [`cpp-coverage.yml`](.github/workflows/cpp-coverage.yml)。
-单个阶段也可直接调用 `actions/`：`phase` 必填，支持 `prepare`、`build`、`test`、`coverage`、`tag`、`package`；`build-type` 和 `coverage` 的默认值分别为 `Release`、`"false"`。打标与归档的完整流程参考 [`cpp-release.yml`](.github/workflows/cpp-release.yml)。
+单个阶段也可直接调用 `actions/`：`phase` 必填，支持 `prepare`、`build`、`test`、`coverage`、`tag`；`build-type` 和 `coverage` 的默认值分别为 `Release`、`"false"`。打标与服务器发布的完整流程参考 [`cpp-release.yml`](.github/workflows/cpp-release.yml)。
 
 公共 workflow 在 `jobs.<job>.uses` 中引用，Action 在 `steps[].uses` 中引用。当前模板和示例使用公司 `.github` 仓库的 `@main`，接入前需要完成部署并替换组织名；正式使用时也可以固定到已验证的版本 tag 或提交 SHA。
 公共实现内部使用 `$/actions/...` 引用同仓库、同一提交的 Action，业务仓库无需复制这些文件。

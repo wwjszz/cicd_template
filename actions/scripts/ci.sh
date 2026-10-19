@@ -3,7 +3,7 @@
 set -eo pipefail
 
 case "$PHASE" in
-    prepare|build|test|coverage|package|tag)
+    prepare|build|test|coverage|tag)
         ;;
     *)
         echo "Unsupported CI phase: $PHASE" >&2
