@@ -44,20 +44,20 @@ jobs:
             - name: Setup
               uses: $/actions/setup
               with:
-                ssh-key: ${{ secrets.CI_SSH_KEY }}
+                  ssh-key: ${{ secrets.CI_SSH_KEY }}
 
             - name: ${{ (inputs.run-tests || inputs.coverage) && 'Build and test' || 'Build' }}
               uses: $/actions/build-test
               with:
-                build-type: ${{ inputs.build-type }}
-                run-tests: ${{ inputs.run-tests }}
-                coverage: ${{ inputs.coverage }}
+                  build-type: ${{ inputs.build-type }}
+                  run-tests: ${{ inputs.run-tests }}
+                  coverage: ${{ inputs.coverage }}
 
             - name: Coverage
               if: ${{ inputs.coverage }}
               uses: $/actions
               with:
-                phase: coverage
+                  phase: coverage
 
             - name: Upload coverage report
               if: ${{ inputs.coverage }}
@@ -66,3 +66,5 @@ jobs:
                   name: coverage-report
                   path: build/test_coverage/
                   if-no-files-found: error
+                  # artifact 过期时间
+                  retention-days: 30

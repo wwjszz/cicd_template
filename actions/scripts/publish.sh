@@ -40,24 +40,7 @@ destination="$project_dir/$RELEASE_TAG"
 [[ ! -e "$destination" && ! -L "$destination" ]] ||
     fail "Version already exists: $destination"
 
-staging="$(mktemp -d "$project_dir/.publishing.XXXXXX")"
-trap 'rm -rf -- "$staging"' EXIT
-mkdir -- "$staging/bin"
+mkdir -m 755 -- "$destination"
+mv -- "$source_dir" "$destination/"
 
-(
-    cd -- "$source_dir"
-    find . -type f -print0 | sort -z | xargs -0 sha256sum
-) > "$staging/SHA256SUMS"
-
-cp -a --no-preserve=ownership -- "$source_dir/." "$staging/bin/"
-(
-    cd -- "$staging/bin"
-    sha256sum --check "$staging/SHA256SUMS"
-)
-
-printf 'tag=%s\ncommit=%s\n' "$RELEASE_TAG" "$GITHUB_SHA" > "$staging/build-info.txt"
-chmod 755 -- "$staging"
-mv -Tn -- "$staging" "$destination"
-[[ ! -d "$staging" ]] || fail "Version was created by another publisher."
-
-echo "Published: $destination/bin"
+echo "Published: $destination"

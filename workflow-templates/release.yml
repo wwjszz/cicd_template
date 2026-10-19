@@ -3,7 +3,7 @@ name: C++ Release
 on:
   push:
     branches: [master]
-    tags-ignore: ['**']
+    tags-ignore: ["**"]
 
 permissions:
   contents: read
