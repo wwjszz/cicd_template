@@ -14,7 +14,7 @@ runs:
   using: composite
   steps:
     - name: Checkout source
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
       with:
         ref: ${{ inputs.ref }}
         fetch-depth: 0
@@ -23,7 +23,7 @@ runs:
         ssh-key: ${{ inputs.ssh-key }}
 
     - name: Start SSH agent
-      uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
+      uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ inputs.ssh-key }}
         ssh-auth-sock: ${{ runner.temp }}/ssh-agent-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}.sock

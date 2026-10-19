@@ -34,49 +34,22 @@
 
 ### 通过脚本安装
 
-在业务仓库的本地 Git 工作区中运行 [`scripts/install-workflows.sh`](scripts/install-workflows.sh)，即可从公共仓库的 `workflow-templates/` 获取三个入口模板，安装到业务仓库根目录的 `.github/workflows/`。
-
-安装脚本是单文件，可以单独分发给项目开发者，不依赖本仓库其他本地文件。收到脚本后，在业务仓库中执行 `bash /path/to/install-workflows.sh --repo COMPANY_ORG/.github --branch master` 即可。`--repo` 也支持迁移前的普通模板仓库，例如 `OWNER/cicd_template`，前提是该仓库同时包含入口模板和公共 workflow；生成的引用会指向所选仓库。
-
-需要 Bash 3.2+、Git 以及常见 Unix 命令（`awk`、`diff`、`cmp`、`mktemp`）。默认通过 SSH 读取公共仓库，沿用当前 Git/SSH 身份，执行者需要该仓库的读取权限。使用 HTTPS 时可加 `--https`，认证沿用 Git credential helper，不需要把 token 写入命令或脚本。
-
-例如，先获取公司公共仓库中的安装脚本，然后在业务仓库中执行（替换组织名和本地路径）：
+在业务仓库的 Git 工作区内执行：
 
 ```bash
-git clone --depth 1 git@github.com:COMPANY_ORG/.github.git /path/to/company-cicd
-cd /path/to/business-repo
-
-bash /path/to/company-cicd/scripts/install-workflows.sh \
-  --repo COMPANY_ORG/.github \
-  --branch master
+bash /path/to/install-workflows.sh --repo wwjszz/cicd_template
 ```
 
-脚本默认安装 build、coverage 和通用 release 三个入口。通用 release 的 `deploy-target` 默认是 `none`；需要复制产物时，改成 `app` 或 `strategy`。
+迁移到公司组织后，将仓库参数改为 `--repo COMPANY_ORG/.github`。脚本可以单独分发，执行者需要该模板仓库的 SSH 读取权限。
 
-脚本从 `--repo` 指定仓库获取模板，同时将生成文件中的公共 workflow 引用改为该仓库。例如指定 `COMPANY_ORG/.github` 后，生成 `uses: COMPANY_ORG/.github/.github/workflows/cpp-build.yml@main`。脚本不会复制公共 Actions、可复用工作流实现或 `.properties.json` 展示信息到业务仓库。
+脚本固定通过 SSH 读取模板仓库的 `main` 分支，只安装 `cpp-build.yml`、`cpp-coverage.yml`、`cpp-release.yml` 三个入口到业务仓库的 `.github/workflows/`，并替换公共仓库名称。
 
-| 参数 | 默认值 | 用途 |
-| --- | --- | --- |
-| `--repo OWNER/REPO` | 必填 | 提供模板及公共 workflow 的仓库 |
-| `--ref REF` | `main` | 读取模板的分支、tag 或提交 SHA，也用于生成引用的 `@REF` |
-| `--branch BRANCH` | `master` | 业务发布分支；build/coverage 排除该分支，release 只在该分支运行 |
-| `--https` | 使用 SSH | 改用 HTTPS 获取模板 |
-| `--dry-run` | 直接生成文件 | 只展示 diff，不写入业务仓库 |
+- 触发规则和发布分支沿用入口模板，当前为非 `master` 分支运行 build、coverage，`master` 运行 release；需要调整时直接修改入口文件。
+- 通用 release 默认 `deploy-target: none`；需要发布文件时改成 `app` 或 `strategy`。
+- 已有相同文件跳过；存在不同内容的同名文件则停止安装，不覆盖文件。
+- 脚本不会提交、推送或配置 runner、secrets。生成后审阅文件，再自行提交。
 
-业务仓库使用 `main` 发布、公共模板固定为 `v1` 时，可先预览：
-
-```bash
-bash /path/to/company-cicd/scripts/install-workflows.sh \
-  --repo COMPANY_ORG/.github --ref v1 --branch main --dry-run
-```
-
-`v1` 必须是公共仓库已有的 tag 或分支。确认后去掉 `--dry-run` 安装。使用固定提交 SHA 也遵循相同方式。
-
-脚本检查完全部模板和目标文件后再安装。重复执行时，相同文件跳过；遇到内容不同的同名文件则整次安装停止，不覆盖任何已有 workflow。使用 `--dry-run` 查看冲突差异后手动处理，再次执行。模板缺失、公共 workflow 缺失或模板结构不符也会在安装前停止。脚本针对本仓库三个入口模板的结构，修改模板的公共调用方式或 `[master]` 分支条件时，需要同步调整安装脚本。
-
-生成后，在接入分支审阅 `.github/workflows/` 中的文件，再自行 `git add`、提交并推送。脚本不会提交、推送或配置 runner、secrets 和组织权限。推送到 `--branch` 指定分支会按入口规则运行发布流程；其他分支 push 会运行 build 和 coverage。
-
-安装是一次性生成入口文件。以后修改公共 workflow 时，使用 `@main` 的业务仓库会引用更新后的公共实现；入口触发规则等本地文件不会自动同步。需要更新入口文件时，重新预览并处理差异。
+入口文件不会自动同步；使用 `@main` 引用的公共 workflow 会随模板仓库更新。
 
 ### 通过 GitHub 页面或手动复制
 
