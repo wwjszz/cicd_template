@@ -4,25 +4,32 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bash /path/to/install-workflows.sh --repo OWNER/REPO
+Usage: bash /path/to/install-workflows.sh --repo OWNER/REPO [--deploy-target TARGET]
 
-  --repo OWNER/REPO  Shared template repository (required)
-  -h, --help         Show this help
+  --repo OWNER/REPO        Shared template repository (required)
+  --deploy-target TARGET  none, app or strategy (default: none)
+  -h, --help               Show this help
 
 Fetches master over SSH and installs ci.yml and release.yml from workflow-templates/.
 Identical files are skipped; conflicting files are not overwritten.
-Release defaults to deploy-target: none; choose app or strategy to publish files.
+Writes deploy-target to release.yml; none skips file publishing.
 EOF
 }
 
 die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 
 source_repo=
+deploy_target=none
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --repo)
       [[ $# -ge 2 ]] || die 'Missing value for --repo'
       source_repo=$2
+      shift 2
+      ;;
+    --deploy-target)
+      [[ $# -ge 2 ]] || die 'Missing value for --deploy-target'
+      deploy_target=$2
       shift 2
       ;;
     -h|--help) usage; exit 0 ;;
@@ -31,6 +38,10 @@ while [[ $# -gt 0 ]]; do
 done
 [[ "$source_repo" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*/[A-Za-z0-9_.-]+$ ]] ||
   die '--repo must be OWNER/REPO, for example COMPANY_ORG/.github'
+case "$deploy_target" in
+  none|app|strategy) ;;
+  *) die '--deploy-target must be none, app or strategy' ;;
+esac
 
 target_root=$(git rev-parse --show-toplevel 2>/dev/null) || die 'Run inside the target Git working tree'
 target_dir="$target_root/.github/workflows"
@@ -48,7 +59,10 @@ mkdir "$scratch/generated"
 for workflow in "${workflows[@]}"; do
   template="$scratch/source/workflow-templates/$workflow"
   [[ -f "$template" ]] || die "Missing source template: workflow-templates/$workflow"
-  sed "s|COMPANY_ORG/\\.github|$source_repo|g" "$template" > "$scratch/generated/$workflow"
+  sed \
+    -e "s|COMPANY_ORG/\\.github|$source_repo|g" \
+    -e "s|^\\([[:space:]]*deploy-target:\\).*|\\1 $deploy_target|" \
+    "$template" > "$scratch/generated/$workflow"
 done
 
 # Check all destinations before writing any files.
@@ -71,4 +85,4 @@ for workflow in "${workflows[@]}"; do
     printf 'Installed: .github/workflows/%s\n' "$workflow"
   fi
 done
-printf '\nReview .github/workflows/, choose the release deploy-target, then commit and push.\n'
+printf '\nRelease deploy-target: %s. Review .github/workflows/, then commit and push.\n' "$deploy_target"

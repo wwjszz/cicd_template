@@ -28,7 +28,7 @@
 使用前准备好：
 
 - 仓库或组织 Secret `CI_SSH_KEY`，用于拉取源码、私有依赖和推送 tag，并授权业务仓库使用。
-- 在线 runner，标签包含 `self-hosted, linux, x64, cpp-cicd-runner`；提供 Docker 和镜像 `localhost:5000/cxx_builder_devtoolset_8:1.3`。
+- 在线 runner，标签包含 `self-hosted, linux, x64, cpp-cicd-runner`；提供 Docker 和镜像 `localhost:5000/cxx_builder_devtoolset_8:1.4`。
 - 可执行的项目 `./build.sh`，支持 `-b -t Release`、`-b -t Debug -C`、`-b -t RelWithDebInfo`、`-T`。构建输出到 `build/`，测试程序放在 `build/run_test/`；`-T` 负责创建并推送新 tag。
 - `CI_SSH_KEY` 对应的 SSH 身份需要推送 tag 的权限。发布步骤将指定产物目录移动到服务器版本目录，入口使用 `permissions: contents: read`。
 - 发布用 runner 配置并挂载 `APPLICATION_RELEASE_ROOT`、`STRATEGY_RELEASE_ROOT`；默认产物目录分别由 `APPLICATION_PUBLISH_DIR`、`STRATEGY_PUBLISH_DIR` 指定。
@@ -40,16 +40,16 @@
 在业务仓库的 Git 工作区内执行安装脚本：
 
 ```bash
-bash /path/to/install-workflows.sh --repo COMPANY_ORG/.github
+bash /path/to/install-workflows.sh --repo COMPANY_ORG/.github --deploy-target none
 ```
 
 替换实际组织名。脚本可以单独分发，执行者需要该模板仓库的 SSH 读取权限。使用个人测试仓库时，参数改为 `--repo wwjszz/cicd_template`。
 
-脚本通过 SSH 读取模板仓库的 `master` 分支，只安装 `ci.yml`、`release.yml` 两个入口到业务仓库的 `.github/workflows/`，并替换公共仓库名称。
+脚本通过 SSH 读取模板仓库的 `master` 分支，只安装 `ci.yml`、`release.yml` 两个入口到业务仓库的 `.github/workflows/`，替换公共仓库名称，并将选择的 `deploy-target` 写入 `release.yml`。
 
 - 触发规则沿用入口模板：非 `master` 分支 push、目标为 `master` 的 PR 依次运行 build、coverage；`master` push 运行 release。
-- release 默认 `deploy-target: none`；系统发布改为 `app`，策略发布改为 `strategy`。
-- 已有相同文件跳过；存在不同内容的同名文件则停止安装，不覆盖文件。
+- `--deploy-target` 可选：`none` 不发布文件（默认），`app` 系统发布，`strategy` 策略发布。省略此选项时仍生成 `deploy-target: none`。
+- 已有相同文件跳过；存在不同内容的同名文件则停止安装，不覆盖文件。已接入项目要更换发布类型时，直接修改其 `release.yml`。
 
 ### 通过 GitHub 页面或手动复制
 

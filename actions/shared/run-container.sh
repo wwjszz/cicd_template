@@ -7,7 +7,7 @@ set -euo pipefail
 
 action_script="${1:?An action script path relative to actions/ is required}"
 actions_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-build_image="localhost:5000/cxx_builder_devtoolset_8:1.3"
+build_image="localhost:5000/cxx_builder_devtoolset_8:1.4"
 
 if [[ ! -f "$actions_dir/$action_script" ]]; then
     echo "Action script was not found: $action_script" >&2
