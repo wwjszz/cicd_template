@@ -39,6 +39,7 @@ docker run --rm --init \
     --mount "type=bind,src=$temp_dir/actions,dst=/opt/ci,readonly" \
     --mount "type=bind,src=$SSH_AUTH_SOCK,dst=/run/ci-ssh-agent.sock,readonly" \
     --mount "type=bind,src=$known_hosts,dst=/run/ci-known-hosts,readonly" \
+    --mount "type=bind,src=/mnt/public_shared_files,dst=/mnt/public_shared_files,readonly" \
     --workdir "$GITHUB_WORKSPACE" \
     --env "BUILD_TYPE=${BUILD_TYPE-Release}" \
     --env "COVERAGE=${COVERAGE-false}" \
