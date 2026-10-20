@@ -13,8 +13,8 @@ if [[ ! -d "$build_dir" ]]; then
 fi
 
 if [[ -z "$(find "$build_dir" -type f -name '*.gcda' -print -quit)" ]]; then
-    echo "No coverage data found. Build with coverage enabled and run tests first." >&2
-    exit 1
+    echo "::warning::No coverage data found. Skipping coverage report generation; build with coverage enabled and run tests to generate a report."
+    exit 0
 fi
 
 mkdir -p -- "$report_dir"

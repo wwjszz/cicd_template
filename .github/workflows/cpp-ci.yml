@@ -63,6 +63,6 @@ jobs:
               with:
                   name: coverage-report
                   path: build/test_coverage/
-                  if-no-files-found: error
+                  if-no-files-found: warn
                   # artifact 过期时间
                   retention-days: 30

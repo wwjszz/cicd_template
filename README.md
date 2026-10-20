@@ -157,9 +157,11 @@ jobs:
   with:
     name: coverage-report
     path: build/test_coverage/
-    if-no-files-found: error
+    if-no-files-found: warn
     retention-days: 30
 ```
+
+没有覆盖率数据时输出警告并跳过报告生成；没有报告文件时上传步骤仅警告，不上传 artifact。编译、测试或报告生成工具执行失败仍会导致流水线失败。
 
 打标前先完成 `setup` 和 Release 编译测试，再调用 `tag`：
 

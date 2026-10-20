@@ -5,7 +5,7 @@ set -eo pipefail
 test_dir="$PWD/build/run_test"
 
 if [[ ! -d "$test_dir" ]]; then
-    echo "Skipping tests: test directory was not found: $test_dir"
+    echo "::warning::Skipping tests: test directory was not found: $test_dir"
     exit 0
 fi
 
@@ -31,7 +31,7 @@ for test_file in ./*; do
 done
 
 if [[ "$ran_tests" == "false" ]]; then
-    echo "No executable test programs were found in: $test_dir"
+    echo "::warning::Skipping tests: no executable test programs were found in: $test_dir"
     exit 0
 fi
 
