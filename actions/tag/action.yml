@@ -11,9 +11,7 @@ runs:
   steps:
     - name: Generate and push version tag
       shell: bash
-      env:
-        CI_ACTION_PATH: ${{ github.action_path }}
-      run: bash "$CI_ACTION_PATH/../shared/run-container.sh" tag/tag.sh
+      run: bash "$GITHUB_ACTION_PATH/../shared/run-container.sh" tag/tag.sh
 
     - name: Export version tag
       id: version

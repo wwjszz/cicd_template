@@ -85,6 +85,10 @@ jobs:
         with:
           build-type: RelWithDebInfo
 
+      - name: Install build artifacts
+        if: ${{ inputs.deploy-target != 'none' }}
+        uses: $/actions/install
+
       - name: Publish to server
         if: ${{ inputs.deploy-target != 'none' }}
         uses: $/actions/publish

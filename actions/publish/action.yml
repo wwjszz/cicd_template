@@ -29,5 +29,4 @@ runs:
         RELEASE_NAME: ${{ inputs.release-name }}
         PUBLISH_DIR: ${{ inputs.publish-dir }}
         RELEASE_TAG: ${{ inputs.release-tag }}
-        PUBLISH_ACTION_PATH: ${{ github.action_path }}
-      run: bash "$PUBLISH_ACTION_PATH/publish.sh"
+      run: bash "$GITHUB_ACTION_PATH/publish.sh"

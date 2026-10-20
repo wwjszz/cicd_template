@@ -7,7 +7,7 @@ set -euo pipefail
 
 action_script="${1:?An action script path relative to actions/ is required}"
 actions_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-build_image="localhost:5000/cxx_builder_devtoolset_8:1.4"
+source "$actions_dir/shared/build.env"
 
 if [[ ! -f "$actions_dir/$action_script" ]]; then
     echo "Action script was not found: $action_script" >&2
@@ -32,7 +32,7 @@ printf '%s\n' \
     'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' \
     > "$known_hosts"
 
-echo "Starting build container: script=$action_script"
+echo "Starting build container: image=$BUILD_IMAGE, script=$action_script"
 
 docker run --rm --init \
     --mount "type=bind,src=$GITHUB_WORKSPACE,dst=$GITHUB_WORKSPACE" \
@@ -43,7 +43,7 @@ docker run --rm --init \
     --workdir "$GITHUB_WORKSPACE" \
     --env "BUILD_TYPE=${BUILD_TYPE-Release}" \
     --env "COVERAGE=${COVERAGE-false}" \
-    --env "BUILD_IMAGE=$build_image" \
+    --env "BUILD_IMAGE=$BUILD_IMAGE" \
     --env GITHUB_REF \
     --env GITHUB_SHA \
     --env RELEASE_TAG \
@@ -52,5 +52,5 @@ docker run --rm --init \
     --env GIT_TERMINAL_PROMPT=0 \
     --env 'GIT_SSH_COMMAND=ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/ci-known-hosts -o ConnectTimeout=10' \
     --entrypoint /bin/bash \
-    "$build_image" \
+    "$BUILD_IMAGE" \
     /opt/ci/shared/container-entrypoint.sh "/opt/ci/$action_script"

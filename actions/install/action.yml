@@ -1,0 +1,9 @@
+name: Install build artifacts
+description: Install existing build artifacts using the project build script
+
+runs:
+  using: composite
+  steps:
+    - name: Install build artifacts
+      shell: bash
+      run: bash "$GITHUB_ACTION_PATH/../shared/run-container.sh" install/install.sh

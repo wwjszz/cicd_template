@@ -6,6 +6,4 @@ runs:
   steps:
     - name: Generate coverage report
       shell: bash
-      env:
-        CI_ACTION_PATH: ${{ github.action_path }}
-      run: bash "$CI_ACTION_PATH/../shared/run-container.sh" coverage/coverage.sh
+      run: bash "$GITHUB_ACTION_PATH/../shared/run-container.sh" coverage/coverage.sh
