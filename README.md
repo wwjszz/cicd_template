@@ -30,7 +30,7 @@
 - 仓库或组织 Secret `CI_SSH_KEY`，用于拉取源码、私有依赖和推送 tag，并授权业务仓库使用。
 - 在线 runner，标签包含 `self-hosted, linux, x64, cpp-cicd-runner`；提供 Docker，能够使用 [`actions/shared/build.env`](actions/shared/build.env) 指定的构建镜像。
 - 可执行的项目 `./build.sh`，支持 `-b -t Release`、`-b -t Debug -C`、`-b -t RelWithDebInfo`、`-T`。构建输出到 `build/`，测试程序放在 `build/run_test/`；`-T` 负责创建并推送新 tag。发布文件时还需支持 `-i`，按项目 CMake 安装规则生成待发布的产物目录。
-- `CI_SSH_KEY` 对应的 SSH 身份需要推送 tag 的权限。发布步骤将指定产物目录移动到服务器版本目录，入口使用 `permissions: contents: read`。
+- `CI_SSH_KEY` 对应的 SSH 身份需要推送 tag 的权限。发布步骤将指定产物目录内的内容移动到服务器版本目录的 `bin/` 下，入口使用 `permissions: contents: read`。
 - 发布用 runner 配置并挂载 `APPLICATION_RELEASE_ROOT`、`STRATEGY_RELEASE_ROOT`；默认产物目录分别由 `APPLICATION_PUBLISH_DIR`、`STRATEGY_PUBLISH_DIR` 指定。
 
 构建镜像统一由 `actions/shared/build.env` 中的 `BUILD_IMAGE` 指定，填写完整的镜像地址和版本。升级时先准备好新镜像，确保 runner 使用的 Docker 能够获取它，再修改该配置并提交、推送模板；业务仓库无需新增参数。引用 `@master` 的后续新运行使用更新后的配置，固定到旧 tag 或提交的引用保持原配置。
@@ -66,7 +66,7 @@ bash /path/to/install-workflows.sh --repo COMPANY_ORG/.github --deploy-target no
 
 `ci.yml` 通过 `needs: build` 保证编译测试成功后才执行 Coverage。两个入口均忽略 tag push，并跳过删除分支的事件。`master` 的任意 push 都会触发发布；需要限制合并时，在仓库规则中要求通过 PR 和 CI 检查。
 
-覆盖率报告在 Actions 的 **Artifacts** 下载，保留 30 天。发布步骤将 `publish-dir` 指定的目录整体移动到服务器的 `{发布根目录}/{发布名称}/{tag}/` 下，并保留目录名。例如 `publish-dir: build/bin` 的结果是 `{发布根目录}/{发布名称}/{tag}/bin/`，工作区中原来的 `build/bin` 随之移走。服务器产物的保留时间单独管理，不受 Artifact 的 30 天配置影响。同版本目录已存在时，打印提醒后删除旧目录，再放入本次产物；移动失败不会自动恢复旧产物。
+覆盖率报告在 Actions 的 **Artifacts** 下载，保留 30 天。发布步骤将 `publish-dir` 指定目录内的全部内容（含隐藏文件和子目录）移动到 `{发布根目录}/{发布名称}/{tag}/bin/`，源目录本身保留为空目录。`app` 和 `strategy` 仍分别使用 runner 的 `APPLICATION_RELEASE_ROOT`、`STRATEGY_RELEASE_ROOT`。例如策略来源为 `build/product/libstrategy_template.so` 时，发布结果为 `{STRATEGY_RELEASE_ROOT}/{发布名称}/{tag}/bin/libstrategy_template.so`；应用来源为 `build/bin` 时，也直接放入对应版本的 `bin/`，不会多套一层 `bin`。服务器产物的保留时间单独管理，不受 Artifact 的 30 天配置影响。同版本目录已存在时，打印提醒后删除旧目录，再放入本次产物；移动失败不会自动恢复旧产物。
 
 发布只负责文件落盘，不启动或重启业务进程，也不创建 GitHub Release。
 
@@ -128,7 +128,7 @@ jobs:
 | [`coverage`](actions/coverage/action.yml) | 无 | 从已有覆盖率数据生成 `build/test_coverage/` |
 | [`tag`](actions/tag/action.yml) | 无 | 创建并推送一个新 tag，通过 `outputs.tag` 返回名称 |
 | [`install`](actions/install/action.yml) | 无 | 在构建容器内执行 `./build.sh -i`，按项目安装规则整理产物 |
-| [`publish`](actions/publish/action.yml) | `deploy-target`、`release-name`、`release-tag`，可选 `publish-dir` | 将产物目录移动到服务器版本目录 |
+| [`publish`](actions/publish/action.yml) | `deploy-target`、`release-name`、`release-tag`，可选 `publish-dir` | 将产物目录内的内容移动到对应发布根目录下的 `{发布名称}/{tag}/bin/` |
 
 在 job 的 `steps` 中依次调用 [`setup`](actions/setup/action.yml) 和 [`build-test`](actions/build-test/action.yml)：
 

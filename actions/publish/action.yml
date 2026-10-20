@@ -1,5 +1,5 @@
 name: Publish build output
-description: Move the build output directory into the server version directory
+description: Move build output contents into the bin directory of the server release version
 
 inputs:
   deploy-target:

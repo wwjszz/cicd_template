@@ -42,7 +42,9 @@ if [[ -e "$destination" || -L "$destination" ]]; then
     rm -rf -- "$destination"
 fi
 
-mkdir -m 755 -- "$destination"
-mv -- "$source_dir" "$destination/"
+bin_dir="$destination/bin"
+mkdir -m 755 -- "$destination" "$bin_dir"
+cp -a -- "$source_dir/." "$bin_dir/"
+rm -rf -- "$source_dir"
 
-echo "Published: $destination"
+echo "Published: $bin_dir"
