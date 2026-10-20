@@ -11,7 +11,7 @@ permissions:
 jobs:
   release:
     if: ${{ github.event.deleted != true }}
-    uses: COMPANY_ORG/.github/.github/workflows/cpp-release.yml@main
+    uses: COMPANY_ORG/.github/.github/workflows/cpp-release.yml@master
     with:
       # none：不发布文件；app：系统发布；strategy：策略发布
       deploy-target: none

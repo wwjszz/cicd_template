@@ -9,7 +9,7 @@ Usage: bash /path/to/install-workflows.sh --repo OWNER/REPO
   --repo OWNER/REPO  Shared template repository (required)
   -h, --help         Show this help
 
-Fetches main over SSH and installs ci.yml and release.yml from workflow-templates/.
+Fetches master over SSH and installs ci.yml and release.yml from workflow-templates/.
 Identical files are skipped; conflicting files are not overwritten.
 Release defaults to deploy-target: none; choose app or strategy to publish files.
 EOF
@@ -40,7 +40,7 @@ done
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/cicd-workflows.XXXXXX")
 trap 'rm -rf -- "$scratch"' EXIT
-git clone --quiet --depth 1 --single-branch --branch main --no-tags \
+git clone --quiet --depth 1 --single-branch --branch master --no-tags \
   "git@github.com:$source_repo.git" "$scratch/source"
 
 workflows=(ci.yml release.yml)
