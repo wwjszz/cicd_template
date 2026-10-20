@@ -37,8 +37,10 @@ project_dir="$release_root/$RELEASE_NAME"
 mkdir -p -m 755 -- "$project_dir"
 
 destination="$project_dir/$RELEASE_TAG"
-[[ ! -e "$destination" && ! -L "$destination" ]] ||
-    fail "Version already exists: $destination"
+if [[ -e "$destination" || -L "$destination" ]]; then
+    echo "Warning: Version $RELEASE_TAG already exists at $destination; replacing it."
+    rm -rf -- "$destination"
+fi
 
 mkdir -m 755 -- "$destination"
 mv -- "$source_dir" "$destination/"

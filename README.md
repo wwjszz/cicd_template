@@ -66,7 +66,7 @@ bash /path/to/install-workflows.sh --repo wwjszz/cicd_template
 
 `ci.yml` 通过 `needs: build` 保证编译测试成功后才执行 Coverage。两个入口均忽略 tag push，并跳过删除分支的事件。`master` 的任意 push 都会触发发布；需要限制合并时，在仓库规则中要求通过 PR 和 CI 检查。
 
-覆盖率报告在 Actions 的 **Artifacts** 下载，保留 30 天。发布步骤将 `publish-dir` 指定的目录整体移动到服务器的 `{发布根目录}/{发布名称}/{tag}/` 下，并保留目录名。例如 `publish-dir: build/bin` 的结果是 `{发布根目录}/{发布名称}/{tag}/bin/`，工作区中原来的 `build/bin` 随之移走。服务器产物的保留时间单独管理，不受 Artifact 的 30 天配置影响。
+覆盖率报告在 Actions 的 **Artifacts** 下载，保留 30 天。发布步骤将 `publish-dir` 指定的目录整体移动到服务器的 `{发布根目录}/{发布名称}/{tag}/` 下，并保留目录名。例如 `publish-dir: build/bin` 的结果是 `{发布根目录}/{发布名称}/{tag}/bin/`，工作区中原来的 `build/bin` 随之移走。服务器产物的保留时间单独管理，不受 Artifact 的 30 天配置影响。同版本目录已存在时，打印提醒后删除旧目录，再放入本次产物，避免残留旧文件。
 
 `release.yml` 默认 `deploy-target: none`，仍执行编译、测试和打 tag，但跳过文件发布。`app` 用于系统发布，`strategy` 用于策略发布；选择 `none` 时无需填写 `release-name` 和 `publish-dir`。打标调用项目的 `build.sh -T`，整条流程重跑可能生成新 tag。
 
