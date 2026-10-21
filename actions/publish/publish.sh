@@ -38,7 +38,7 @@ mkdir -p -m 755 -- "$project_dir"
 
 destination="$project_dir/$RELEASE_TAG"
 if [[ -e "$destination" || -L "$destination" ]]; then
-    echo "Warning: Version $RELEASE_TAG already exists at $destination; replacing it."
+    echo "::warning::Version $RELEASE_TAG already exists at $destination; replacing it."
     rm -rf -- "$destination"
 fi
 
