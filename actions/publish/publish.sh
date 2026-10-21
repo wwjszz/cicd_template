@@ -38,8 +38,13 @@ mkdir -p -m 755 -- "$project_dir"
 
 destination="$project_dir/$RELEASE_TAG"
 if [[ -e "$destination" || -L "$destination" ]]; then
-    echo "::warning::Version $RELEASE_TAG already exists at $destination; replacing it."
-    rm -rf -- "$destination"
+    backup_root="$project_dir/.backup/$RELEASE_TAG"
+    mkdir -p -- "$backup_root"
+
+    backup_dir="$backup_root/$(date +%Y%m%d-%H%M%S-%N)"
+    mv -T -- "$destination" "$backup_dir"
+
+    echo "::warning::Version $RELEASE_TAG already exists; backed up to $backup_dir; replacing it."
 fi
 
 bin_dir="$destination/bin"
