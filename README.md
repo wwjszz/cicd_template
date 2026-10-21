@@ -66,7 +66,7 @@ bash /path/to/install-workflows.sh --repo COMPANY_ORG/.github --deploy-target no
 
 `ci.yml` 通过 `needs: build` 保证编译测试成功后才执行 Coverage。两个入口均忽略 tag push，并跳过删除分支的事件。`master` 的任意 push 都会触发发布；需要限制合并时，在仓库规则中要求通过 PR 和 CI 检查。
 
-覆盖率报告在 Actions 的 **Artifacts** 下载，保留 30 天。发布步骤将 `publish-dir` 指定目录内的全部内容（含隐藏文件和子目录）移动到 `{发布根目录}/{发布名称}/{tag}/bin/`，源目录本身保留为空目录。`app` 和 `strategy` 仍分别使用 runner 的 `APPLICATION_RELEASE_ROOT`、`STRATEGY_RELEASE_ROOT`。例如策略来源为 `build/product/libstrategy_template.so` 时，发布结果为 `{STRATEGY_RELEASE_ROOT}/{发布名称}/{tag}/bin/libstrategy_template.so`；应用来源为 `build/bin` 时，也直接放入对应版本的 `bin/`，不会多套一层 `bin`。服务器产物的保留时间单独管理，不受 Artifact 的 30 天配置影响。同版本目录已存在时，打印提醒后删除旧目录，再放入本次产物；移动失败不会自动恢复旧产物。
+覆盖率报告在 Actions 的 **Artifacts** 下载，保留 30 天。发布步骤将 `publish-dir` 指定目录内的全部内容（含隐藏文件和子目录）移动到 `{发布根目录}/{发布名称}/{tag}/bin/`，源目录本身保留为空目录。`app` 和 `strategy` 仍分别使用 runner 的 `APPLICATION_RELEASE_ROOT`、`STRATEGY_RELEASE_ROOT`。例如策略来源为 `build/product/bin/libstrategy_template.so` 时，发布结果为 `{STRATEGY_RELEASE_ROOT}/{发布名称}/{tag}/bin/libstrategy_template.so`；应用来源为 `build/product/bin` 时，也直接放入对应版本的 `bin/`，不会多套一层 `bin`。服务器产物的保留时间单独管理，不受 Artifact 的 30 天配置影响。同版本目录已存在时，打印提醒后删除旧目录，再放入本次产物；移动失败不会自动恢复旧产物。
 
 发布只负责文件落盘，不启动或重启业务进程，也不创建 GitHub Release。
 
